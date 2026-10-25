@@ -1,0 +1,3562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#05030c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Chakra Run v4.1: Grand Temple Auto (Error-Free Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --gold: #f59e0b;
+            --gold-light: #fde047;
+            --cosmic: #a855f7;
+            --bg-dark: #05030c;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #05030c;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .font-cinzel {
+            font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+            letter-spacing: 0.05em;
+        }
+        canvas#gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 0;
+        }
+        .hidden { display: none !important; }
+        .overlay-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 30;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: radial-gradient(circle at center, rgba(14, 9, 32, 0.88) 0%, rgba(4, 2, 10, 0.96) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            overflow-y: auto;
+        }
+        .modal-card {
+            width: 100%;
+            max-width: 1180px;
+            max-height: 95vh;
+            overflow-y: auto;
+            background: linear-gradient(165deg, rgba(18, 13, 42, 0.97) 0%, rgba(7, 5, 18, 0.99) 100%);
+            border: 1.5px solid rgba(245, 158, 11, 0.45);
+            border-radius: 22px;
+            padding: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.2);
+            margin: auto;
+        }
+        .character-card {
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 2px solid rgba(71, 85, 105, 0.55);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.88) 0%, rgba(9, 13, 26, 0.96) 100%);
+            border-radius: 16px;
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .character-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(251, 191, 36, 0.85);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
+        }
+        .character-card.selected {
+            border-color: #fbbf24;
+            box-shadow: 0 0 25px rgba(251, 191, 36, 0.5), inset 0 0 15px rgba(245, 158, 11, 0.22);
+            background: linear-gradient(180deg, rgba(38, 28, 84, 0.94) 0%, rgba(58, 24, 7, 0.88) 100%);
+        }
+        .btn-gold {
+            background: linear-gradient(90deg, #d97706 0%, #fde047 50%, #d97706 100%);
+            background-size: 200% auto;
+            color: #090514;
+            font-weight: 900;
+            border-radius: 14px;
+            padding: 11px 22px;
+            border: 1px solid #fef08a;
+            cursor: pointer;
+            box-shadow: 0 0 22px rgba(245, 158, 11, 0.55);
+            transition: all 0.2s ease;
+        }
+        .btn-gold:hover {
+            background-position: right center;
+            transform: translateY(-1px);
+            box-shadow: 0 0 30px rgba(253, 224, 71, 0.85);
+        }
+        .btn-gold:active { transform: scale(0.96); }
+        .btn-action {
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-action:active { transform: scale(0.94); }
+        .glass-panel {
+            background: rgba(9, 7, 22, 0.84);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+        }
+        .gta-radar-frame {
+            border: 3px solid #fbbf24;
+            box-shadow: 0 0 22px rgba(0,0,0,0.9), inset 0 0 15px rgba(0,0,0,0.85), 0 0 15px rgba(245, 158, 11, 0.35);
+            border-radius: 18px;
+            background: #060b14;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.6); border-radius: 9999px; }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none bg-[#05030c]">
+
+    <!-- MAIN DUAL-MODE GAME CANVAS (GTA OPEN WORLD + 3D TEMPLE RUNNER) -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- IN-GAME HUD (v4.0 GTA RADAR + KARMA STARS + CHAKRA MATRIX + LIVE TELEMETRY) -->
+    <div id="hudLayer" class="hidden absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-2 sm:p-3">
+        
+        <!-- Top Row: GTA Radar Minimap (Left), 7-Chakra Matrix & Karma Stars (Center), Live Graphs & Mode Switch (Right) -->
+        <div class="flex flex-wrap lg:flex-nowrap items-start justify-between gap-2 w-full max-w-[1440px] mx-auto">
+            
+            <!-- Left: GTA-Style Interactive Radar Minimap + District & Score -->
+            <div class="flex items-start gap-2.5 pointer-events-auto">
+                <!-- GTA Minimap Box -->
+                <div id="gtaRadarContainer" class="relative gta-radar-frame w-[134px] h-[134px] sm:w-[162px] sm:h-[162px] overflow-hidden flex-shrink-0 cursor-crosshair" title="Click anywhere on GTA Radar to set GPS Waypoint">
+                    <canvas id="gtaMinimapCanvas" width="162" height="162" class="w-full h-full block"></canvas>
+                    <!-- North Indicator Badge -->
+                    <div class="absolute top-1 left-1.5 bg-slate-950/90 border border-amber-400/60 text-amber-300 font-black text-[9px] px-1.5 py-0.2 rounded">
+                        N • GPS
+                    </div>
+                    <button id="btnClearWaypoint" class="absolute bottom-1 right-1 bg-slate-950/85 hover:bg-slate-800 text-[9px] text-purple-300 border border-purple-400/50 rounded px-1.5 py-0.5 font-bold">
+                        📍WP
+                    </button>
+                </div>
+
+                <!-- Score, District, Mount & Karma Wanted Level -->
+                <div class="flex flex-col gap-1.5">
+                    <div class="glass-panel rounded-2xl px-3 py-2 shadow-xl">
+                        <div class="flex items-center justify-between gap-3">
+                            <div>
+                                <div class="text-[9px] uppercase tracking-widest text-amber-300 font-bold">Consciousness</div>
+                                <div id="hudScore" class="text-lg sm:text-2xl font-cinzel font-black text-amber-400 leading-none">0</div>
+                            </div>
+                            <div class="h-7 w-[1px] bg-slate-700"></div>
+                            <div>
+                                <div class="text-[9px] uppercase tracking-widest text-slate-400">Travel</div>
+                                <div id="hudDistance" class="text-xs sm:text-sm font-bold text-white">0m</div>
+                            </div>
+                        </div>
+                        <div class="mt-1 pt-1 border-t border-slate-800/90 flex items-center justify-between gap-2 text-[10px]">
+                            <span id="hudBiomeName" class="text-cyan-300 font-bold truncate max-w-[140px]"> Lotus Plaza</span>
+                            <span id="hudSerpentLength" class="text-emerald-300 font-mono font-bold">Segments: 14</span>
+                        </div>
+                    </div>
+
+                    <!-- GTA Karma Shadow Alert Stars (1-5 Glowing Eyes) -->
+                    <div class="glass-panel rounded-xl px-2.5 py-1 flex items-center justify-between gap-2">
+                        <span class="text-[9px] uppercase tracking-wider text-rose-300 font-bold">Karma Alert:</span>
+                        <div id="hudKarmaStars" class="flex items-center gap-0.5 text-xs">
+                            <span class="opacity-25">👁️</span>
+                            <span class="opacity-25">👁️</span>
+                            <span class="opacity-25">👁️</span>
+                            <span class="opacity-25">👁️</span>
+                            <span class="opacity-25">👁️</span>
+                        </div>
+                    </div>
+
+                    <!-- Active Vehicle / Spirit Mount Indicator -->
+                    <div id="hudMountBadge" class="glass-panel rounded-xl px-2.5 py-1 flex items-center justify-between gap-2 text-[10px]">
+                        <span class="text-slate-400">Vessel:</span>
+                        <span id="hudMountName" class="text-amber-300 font-bold">On Foot / Slither</span>
+                    </div>
+
+                    <!-- v4.1 Diagnostic Engine Status Badge -->
+                    <div class="glass-panel rounded-xl px-2.5 py-0.5 flex items-center justify-between gap-2 text-[9px] border-emerald-500/40">
+                        <span class="text-emerald-400 font-bold">● v4.1 Error-Free Engine</span>
+                        <span id="hudFpsCounter" class="text-slate-300 font-mono font-bold">60 FPS</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center: 7-Chakra Alignment Matrix & Mode Switcher -->
+            <div class="flex flex-col items-center glass-panel border-purple-500/40 rounded-2xl px-3 py-1.5 pointer-events-auto shadow-xl mx-auto lg:mx-0">
+                <div class="flex items-center gap-2 mb-1">
+                    <span id="hudModeBadge" class="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-black uppercase">
+                        🗺️ GTA OPEN WORLD
+                    </span>
+                    <span id="hudMultiplierBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold">
+                        0/7 CHAKRAS
+                    </span>
+                </div>
+                <div id="chakraSlotsContainer" class="flex items-center gap-1 sm:gap-1.5"></div>
+                <div class="text-[9px] text-slate-400 mt-1">
+                    Tap any Chakra icon above to hear its Solfeggio Instrument!
+                </div>
+            </div>
+
+            <!-- Right: Live Telemetry Sparkline, Sound Lab, Mode Toggle & Menu Buttons -->
+            <div class="flex items-center gap-1.5 pointer-events-auto ml-auto lg:ml-0">
+                <div class="hidden sm:flex items-center gap-2 glass-panel rounded-2xl px-2.5 py-1.5 shadow-xl">
+                    <div class="flex flex-col">
+                        <div class="flex items-center justify-between text-[9px] text-amber-300 font-bold uppercase mb-0.5">
+                            <span>⚡ Vel</span>
+                            <span id="hudVelocityVal" class="text-emerald-300 font-mono">0m/s</span>
+                        </div>
+                        <canvas id="hudSparklineCanvas" width="96" height="30" class="rounded bg-slate-950/90 border border-slate-800"></canvas>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="text-[9px] text-purple-300 font-bold uppercase mb-0.5">7-EQ</div>
+                        <canvas id="hudEqualizerCanvas" width="54" height="30" class="rounded bg-slate-950/90 border border-slate-800"></canvas>
+                    </div>
+                </div>
+
+                <button id="btnSwitchModeHUD" class="btn-action glass-panel hover:bg-purple-900/60 text-amber-300 border border-amber-400/50 rounded-xl px-2.5 py-2 text-[11px] font-bold shadow-lg" title="Switch between GTA Open World and 3D Temple Runner">
+                    🔄 Mode
+                </button>
+                <button id="btnHudSoundLab" class="btn-action glass-panel hover:bg-slate-800 text-cyan-300 border border-cyan-500/40 rounded-xl px-2.5 py-2 text-xs font-bold" title="7-Chakra Acoustic Soundboard Lab">
+                    🎵
+                </button>
+                <button id="btnHudAnalytics" class="btn-action glass-panel hover:bg-slate-800 text-emerald-300 border border-emerald-500/40 rounded-xl px-2.5 py-2 text-xs font-bold" title="Telemetry & Graphs">
+                    📊
+                </button>
+                <button id="btnPauseGame" class="btn-action glass-panel hover:bg-slate-800 text-amber-300 border border-amber-500/40 rounded-xl px-3 py-2 text-xs font-bold" title="Main Menu">
+                    ⏸
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Floating Notifications -->
+        <div id="floatingAnnouncement" class="flex flex-col items-center justify-center text-center pointer-events-none transition-all duration-300 opacity-0 transform scale-90 my-auto">
+            <div id="announcementTitle" class="font-cinzel text-xl sm:text-4xl font-black text-amber-300 drop-shadow-[0_4px_16px_rgba(245,158,11,0.95)]"></div>
+            <div id="announcementSub" class="text-xs sm:text-sm font-semibold text-purple-200 bg-slate-950/90 px-4 py-1 rounded-full mt-1 border border-purple-400/50 shadow-lg"></div>
+        </div>
+
+        <!-- Bottom Controls: Virtual Analog Joystick (Open World) + Action Buttons -->
+        <div class="flex items-end justify-between w-full max-w-5xl mx-auto pointer-events-auto pb-1">
+            
+            <!-- Left: Virtual 360 Joystick (Open World) OR Lane Left/Right (Runner) -->
+            <div class="flex items-center gap-2">
+                <div id="virtualJoystickZone" class="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full glass-panel border-2 border-amber-400/50 flex items-center justify-center shadow-2xl touch-none">
+                    <div class="text-[9px] uppercase tracking-widest text-amber-200/40 font-bold pointer-events-none">360° STEER</div>
+                    <div id="virtualJoystickKnob" class="w-11 h-11 rounded-full bg-gradient-to-br from-amber-300 to-amber-600 border-2 border-yellow-100 shadow-lg pointer-events-none transition-transform duration-75"></div>
+                </div>
+
+                <!-- Classic Lane Buttons (Shown in 3D Runner Mode) -->
+                <div id="runnerLaneButtons" class="hidden gap-2">
+                    <button id="btnTouchLeft" class="btn-action w-14 h-14 rounded-2xl glass-panel border border-amber-500/50 text-2xl text-amber-300">◀</button>
+                    <button id="btnTouchRight" class="btn-action w-14 h-14 rounded-2xl glass-panel border border-amber-500/50 text-2xl text-amber-300">▶</button>
+                </div>
+            </div>
+
+            <!-- Center Controls Hint -->
+            <div class="hidden md:flex flex-col items-center text-[11px] text-slate-300 glass-panel px-4 py-1.5 rounded-xl border border-slate-700/80">
+                <span id="hudControlsHintTop"><strong class="text-amber-300">WASD / Arrows / Joystick</strong> to Steer • <strong class="text-cyan-300">Click Radar</strong> for GPS Route</span>
+                <span><strong class="text-emerald-300">SPACE</strong> Dash/Jump • <strong class="text-purple-300">F</strong> Mount Chariot/Beast • <strong class="text-rose-300">E</strong> Shockwave Roar</span>
+            </div>
+
+            <!-- Right: GTA Open-World & Runner Action Pad -->
+            <div class="grid grid-cols-2 gap-2">
+                <button id="btnActionMount" class="btn-action px-3 py-2.5 rounded-2xl glass-panel border border-cyan-400/60 text-cyan-300 flex flex-col items-center justify-center shadow-xl">
+                    <span class="text-base leading-none">🐎</span>
+                    <span class="text-[9px] font-bold uppercase mt-0.5">Mount (F)</span>
+                </button>
+                <button id="btnActionPulse" class="btn-action px-3 py-2.5 rounded-2xl glass-panel border border-purple-400/60 text-purple-300 flex flex-col items-center justify-center shadow-xl">
+                    <span class="text-base leading-none">💥</span>
+                    <span class="text-[9px] font-bold uppercase mt-0.5">Pulse (E)</span>
+                </button>
+                <button id="btnTouchSlide" class="btn-action px-3 py-2.5 rounded-2xl glass-panel border border-amber-400/60 text-amber-300 flex flex-col items-center justify-center shadow-xl">
+                    <span class="text-base leading-none">⚡</span>
+                    <span class="text-[9px] font-bold uppercase mt-0.5">Boost/Slide</span>
+                </button>
+                <button id="btnTouchJump" class="btn-action px-3 py-2.5 rounded-2xl glass-panel border border-emerald-400/60 text-emerald-300 flex flex-col items-center justify-center shadow-xl">
+                    <span class="text-base leading-none">▲</span>
+                    <span class="text-[9px] font-bold uppercase mt-0.5">Jump/Leap</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU MODAL (v4.1 GTA OPEN WORLD + 6 AVATARS INCLUDING KUNDALINI SERPENT) -->
+    <div id="menuModal" class="overlay-screen">
+        <div class="modal-card">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-3 border-b border-slate-800/90 pb-3 mb-3">
+                <div class="text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-400/50 text-emerald-300 text-[10px] font-bold mb-1">
+                        <span>🛡️</span> VERSION 4.1 • ERROR-FREE ENGINE • 60 FPS SELF-HEALING GUARD
+                    </div>
+                    <h1 class="font-cinzel text-2xl sm:text-4xl font-black tracking-wider text-amber-300">
+                        CHAKRA RUN 4.1: GRAND TEMPLE AUTO
+                    </h1>
+                    <p class="text-xs text-slate-300">
+                        Roam a 4000×4000 open world with GTA radar, rideable mounts, slithering Kundalini Serpent physics, and 7 distinct Chakra instruments.
+                    </p>
+                </div>
+
+                <!-- Top Utility Bar -->
+                <div class="flex flex-wrap items-center justify-center gap-1.5">
+                    <button id="btnOpenSoundLabMenu" class="btn-action flex items-center gap-1 px-3 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/60 text-cyan-200 font-bold text-xs shadow-lg">
+                        <span>🎵</span> 7-Chakra Sound Lab
+                    </button>
+                    <button id="btnOpenAnalyticsMenu" class="btn-action flex items-center gap-1 px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/60 text-emerald-200 font-bold text-xs shadow-lg">
+                        <span>📊</span> Graphs
+                    </button>
+                    <button id="btnOpenCodex" class="btn-action flex items-center gap-1 px-3 py-2 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 border border-purple-400/50 text-purple-100 font-semibold text-xs shadow-lg">
+                        <span>📜</span> Chakra Chart
+                    </button>
+                    <button id="btnOpenPacker" class="btn-action flex items-center gap-1 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 font-bold text-xs shadow-lg">
+                        <span>📦</span> APK / Photos
+                    </button>
+                    <button id="btnToggleAudio" class="btn-action px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-amber-300 font-semibold text-xs">
+                        🔊 SFX: ON
+                    </button>
+                </div>
+            </div>
+
+            <!-- Game Mode Selector Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
+                <div id="modeCard_openworld" class="cursor-pointer rounded-2xl p-3 border-2 border-emerald-400 bg-gradient-to-r from-emerald-950/80 to-slate-900/90 flex items-center justify-between shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">🗺️</div>
+                        <div>
+                            <div class="font-cinzel font-black text-sm sm:text-base text-emerald-300">MODE 1: GTA OPEN-WORLD SANDBOX (NEW!)</div>
+                            <div class="text-[11px] text-slate-300">Explore 4 Biomes, GTA Radar & GPS, Ride Chariots/Serpents, 7 Shrines & Karma Stars</div>
+                        </div>
+                    </div>
+                    <span id="modeBadge_openworld" class="px-2.5 py-1 rounded-full bg-emerald-400 text-slate-950 font-black text-[10px]">ACTIVE</span>
+                </div>
+
+                <div id="modeCard_runner" class="cursor-pointer rounded-2xl p-3 border-2 border-slate-700 bg-slate-900/75 hover:border-purple-400/60 flex items-center justify-between transition">
+                    <div class="flex items-center gap-3">
+                        <div class="text-3xl">🏛️</div>
+                        <div>
+                            <div class="font-cinzel font-black text-sm sm:text-base text-purple-300">MODE 2: CLASSIC 3D TEMPLE RUNNER</div>
+                            <div class="text-[11px] text-slate-300">High-speed 3-lane pseudo-3D endless highway with hurdles, arches & volumetric rays</div>
+                        </div>
+                    </div>
+                    <span id="modeBadge_runner" class="px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px]">SELECT</span>
+                </div>
+            </div>
+
+            <!-- 6 Playable Characters Grid (3 Sacred Beasts/Serpents + 3 Human Explorers) -->
+            <div class="mb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                    <h2 class="font-cinzel text-sm sm:text-base font-bold text-amber-300 uppercase tracking-wider">
+                        Select Your Avatar (3 Sacred Creatures + 3 Explorers)
+                    </h2>
+                    <span id="photoStatusBadge" class="text-[10px] text-emerald-300 bg-emerald-950/70 border border-emerald-500/40 px-2.5 py-0.5 rounded-full">
+                        ✓ All 6 Avatars & Procedural Art Ready
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="characterCardsGrid">
+                    <!-- 1. Kundalini Naga Serpent (NEW DEFAULT IN v4.0) -->
+                    <div data-char="serpent" class="character-card selected">
+                        <div class="flex gap-3 items-center">
+                            <img id="cardImg_serpent" src="" alt="Kundalini Naga Serpent" class="w-20 h-20 rounded-xl object-cover border border-emerald-400 flex-shrink-0">
+                            <div>
+                                <span class="text-[9px] bg-emerald-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">🐍 Slither Physics</span>
+                                <div class="font-cinzel font-bold text-emerald-300 text-sm mt-0.5">Kundalini Naga Serpent</div>
+                                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">
+                                    Multi-segmented giant cobra that grows longer with every Chakra collected! Coils orbs across lanes & swims fast in water.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">
+                            <span>Special: <strong class="text-emerald-300">Venom Dash + Growth</strong></span>
+                            <span class="char-select-badge text-amber-300 font-bold">✓ SELECTED</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. Garuda Sky Phoenix (NEW) -->
+                    <div data-char="phoenix" class="character-card">
+                        <div class="flex gap-3 items-center">
+                            <img id="cardImg_phoenix" src="" alt="Garuda Sky Phoenix" class="w-20 h-20 rounded-xl object-cover border border-amber-400 flex-shrink-0">
+                            <div>
+                                <span class="text-[9px] bg-amber-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">🦅 Aerial Glide</span>
+                                <div class="font-cinzel font-bold text-amber-300 text-sm mt-0.5">Garuda Solar Phoenix</div>
+                                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">
+                                     Divine winged eagle-phoenix that glides effortlessly over rivers, canyons, and ground traps with 2x Crown & Solar energy.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">
+                            <span>Special: <strong class="text-amber-300">Sky Flight (Ignores Water)</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">SELECT</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. Vajra White Tiger (NEW) -->
+                    <div data-char="tiger" class="character-card">
+                        <div class="flex gap-3 items-center">
+                            <img id="cardImg_tiger" src="" alt="Vajra White Tiger" class="w-20 h-20 rounded-xl object-cover border border-purple-400 flex-shrink-0">
+                            <div>
+                                <span class="text-[9px] bg-purple-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">🐅 Thunder Roar</span>
+                                <div class="font-cinzel font-bold text-purple-300 text-sm mt-0.5">Vajra White Tiger</div>
+                                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">
+                                    Mythic Himalayan lightning beast with top sprint velocity and a Thunder Roar (E) that banishes Shadow Stalkers.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">
+                            <span>Special: <strong class="text-purple-300">Lightning Pounce & Roar</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">SELECT</span>
+                        </div>
+                    </div>
+
+                    <!-- 4. Golden Jungle Explorer (1000062477.png) -->
+                    <div data-char="explorer" class="character-card">
+                        <div class="flex gap-3 items-center">
+                            <img id="cardImg_explorer" src="1000062477.png" alt="Golden Explorer" class="w-20 h-20 rounded-xl object-cover object-top border border-yellow-400 flex-shrink-0">
+                            <div>
+                                <span class="text-[9px] bg-yellow-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">🧲 Alchemist</span>
+                                <div class="font-cinzel font-bold text-yellow-300 text-sm mt-0.5">Golden Explorer</div>
+                                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">
+                                    Wide Golden Magnet aura pulls distant Chakra orbs automatically and grants 2x Root & Solar Plexus points.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">
+                            <span>Photo: <strong class="text-yellow-300">1000062477.png</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">SELECT</span>
+                        </div>
+                    </div>
+
+                    <!-- 5. Ocean Mystic (1000062481.jpg) -->
+                    <div data-char="mystic" class="character-card">
+                        <div class="flex gap-3 items-center">
+                            <img id="cardImg_mystic" src="1000062481.jpg" alt="Ocean Mystic" class="w-20 h-20 rounded-xl object-cover object-top border border-cyan-400 flex-shrink-0">
+                            <div>
+                                <span class="text-[9px] bg-cyan-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">🛡️ Water Aegis</span>
+                                <div class="font-cinzel font-bold text-cyan-300 text-sm mt-0.5">Ocean Mystic</div>
+                                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">
+                                    Starts with a protective Water Aegis barrier and recharges shields whenever collecting Sacral or Throat Chakras.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">
+                            <span>Photo: <strong class="text-cyan-300">1000062481.jpg</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">SELECT</span>
+                        </div>
+                    </div>
+
+                    <!-- 6. Outlaw Duo & Hound (1000062478.png) -->
+                    <div data-char="outlaws" class="character-card">
+                        <div class="flex gap-3 items-center">
+                            <img id="cardImg_outlaws" src="1000062478.png" alt="Outlaw Duo & Hound" class="w-20 h-20 rounded-xl object-cover object-top border border-orange-400 flex-shrink-0">
+                            <div>
+                                <span class="text-[9px] bg-orange-400 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">🐾 Frontier Pack</span>
+                                <div class="font-cinzel font-bold text-orange-300 text-sm mt-0.5">Outlaw Duo & Hound</div>
+                                <p class="text-[11px] text-slate-300 leading-snug mt-0.5">
+                                    High-reflex canyon riders & Sheriff Rottweiler hound that grants +50% Heart & Crown Chakra points.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px] text-slate-400 mt-2 pt-1 border-t border-slate-800">
+                            <span>Photo: <strong class="text-orange-300">1000062478.png</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">SELECT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Strip & Launch Button -->
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-3 bg-slate-950/90 border border-slate-800 rounded-2xl p-3">
+                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[10px]">
+                    <span class="text-slate-400 font-bold">7 Distinct Chakra Instruments:</span>
+                    <span class="px-2 py-0.5 rounded bg-red-950 border border-red-500/50 text-red-300">1. Root: Tribal Drum (396Hz)</span>
+                    <span class="px-2 py-0.5 rounded bg-orange-950 border border-orange-500/50 text-orange-300">2. Sacral: Waterimba (417Hz)</span>
+                    <span class="px-2 py-0.5 rounded bg-yellow-950 border border-yellow-500/50 text-yellow-300">3. Solar: Brass Gong (528Hz)</span>
+                    <span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-500/50 text-emerald-300">4. Heart: Harp & Flute (639Hz)</span>
+                    <span class="px-2 py-0.5 rounded bg-sky-950 border border-sky-500/50 text-sky-300">5. Throat: Choir Synth (741Hz)</span>
+                    <span class="px-2 py-0.5 rounded bg-indigo-950 border border-indigo-500/50 text-indigo-300">6. 3rd Eye: Singing Bowl (852Hz)</span>
+                    <span class="px-2 py-0.5 rounded bg-purple-950 border border-purple-500/50 text-purple-200">7. Crown: Celestial Pad (963Hz)</span>
+                </div>
+
+                <button id="btnStartRun" class="btn-gold w-full lg:w-auto font-cinzel text-sm sm:text-base tracking-wider whitespace-nowrap">
+                    ⚡ LAUNCH GRAND CHAKRA AUTO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7-CHAKRA ACOUSTIC SOUNDBOARD & OSCILLOSCOPE LAB MODAL (NEW IN v4.0) -->
+    <div id="soundLabModal" class="hidden overlay-screen" style="z-index: 42;">
+        <div class="modal-card max-w-4xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div>
+                    <div class="text-[10px] font-bold uppercase tracking-widest text-cyan-400">🎵 MULTI-INSTRUMENT WEB AUDIO SYNTHESIZER</div>
+                    <h2 class="font-cinzel text-lg sm:text-2xl font-black text-amber-300">
+                        7-CHAKRA ACOUSTIC SOUNDBOARD & OSCILLOSCOPE
+                    </h2>
+                    <p class="text-xs text-slate-400">
+                        Each Chakra is synthesized in real time using a distinct musical instrument profile and Solfeggio frequency. Tap any card to audition!
+                    </p>
+                </div>
+                <button id="btnCloseSoundLab" class="btn-action px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-600">
+                    ✕ Close
+                </button>
+            </div>
+
+            <!-- Live Waveform Oscilloscope Display -->
+            <div class="bg-slate-950 border border-cyan-500/40 rounded-2xl p-3 mb-4">
+                <div class="flex items-center justify-between text-xs mb-1.5">
+                    <span id="oscActiveLabel" class="font-bold text-cyan-300">Tap any Chakra below to visualize its acoustic waveform...</span>
+                    <button id="btnPlayAllChakraScale" class="btn-action px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-400/60 text-amber-300 font-bold text-xs">
+                        ▶️ Play Full 7-Chakra Ascending Scale
+                    </button>
+                </div>
+                <canvas id="oscilloscopeCanvas" width="760" height="110" class="w-full h-24 rounded-xl bg-[#040711] border border-slate-800"></canvas>
+            </div>
+
+            <!-- 7 Chakra Instrument Pads -->
+            <div id="soundboardGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5"></div>
+        </div>
+    </div>
+
+    <!-- INTERACTIVE ANALYTICS & TELEMETRY GRAPHS DASHBOARD MODAL -->
+    <div id="analyticsModal" class="hidden overlay-screen" style="z-index: 40;">
+        <div class="modal-card max-w-6xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3 mb-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-emerald-400">
+                        <span>📈</span> CHAKRA ALGORITHM & OPEN-WORLD TELEMETRY LAB (v4.0)
+                    </div>
+                    <h2 class="font-cinzel text-xl sm:text-2xl font-black text-amber-300">
+                        CONSCIOUSNESS RESONANCE & WORLD EXPLORATION GRAPHS
+                    </h2>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnSimulateDemoTelemetry" class="btn-action px-3 py-1.5 rounded-xl bg-purple-900/70 hover:bg-purple-800 text-purple-200 font-bold text-xs border border-purple-500/50">
+                        ✨ Simulate Sample Data
+                    </button>
+                    <button id="btnCloseAnalytics" class="btn-action px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-600">
+                        ✕ Close
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                <div class="bg-slate-950/90 border border-amber-500/30 rounded-2xl p-3">
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400">Algorithm Balance Score</div>
+                    <div id="statBalanceScore" class="font-cinzel text-xl sm:text-2xl font-black text-amber-400 mt-0.5">0</div>
+                    <div id="statHarmonyPct" class="text-[11px] text-emerald-400 font-semibold">Harmony Index: 100%</div>
+                </div>
+                <div class="bg-slate-950/90 border border-purple-500/30 rounded-2xl p-3">
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400">Dominant Chakra</div>
+                    <div id="statDominantChakra" class="font-cinzel text-lg sm:text-xl font-bold text-purple-300 mt-0.5">Crown (Sahasrara)</div>
+                    <div id="statDominantSub" class="text-[11px] text-slate-400">963Hz Cosmic Resonance</div>
+                </div>
+                <div class="bg-slate-950/90 border border-cyan-500/30 rounded-2xl p-3">
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400">Peak Velocity & Distance</div>
+                    <div id="statPeakVelocity" class="font-cinzel text-xl sm:text-2xl font-bold text-cyan-300 mt-0.5">32.0 m/s</div>
+                    <div id="statTotalDist" class="text-[11px] text-slate-400">Travel Distance: 0m</div>
+                </div>
+                <div class="bg-slate-950/90 border border-emerald-500/30 rounded-2xl p-3">
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400">Serpent Length & Best</div>
+                    <div id="statTotalRuns" class="font-cinzel text-xl sm:text-2xl font-bold text-emerald-300 mt-0.5">14 Segments</div>
+                    <div id="statAllTimeBest" class="text-[11px] text-amber-300">All-Time Best: 0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                <div class="lg:col-span-5 bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 flex flex-col items-center">
+                    <div class="w-full flex items-center justify-between mb-2">
+                        <div>
+                            <h3 class="text-xs sm:text-sm font-bold text-amber-300 uppercase">1. 7-Chakra Alignment Radar</h3>
+                            <p class="text-[11px] text-slate-400">Symmetry vs. Ideal Harmonic Polygon</p>
+                        </div>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-purple-950 border border-purple-500/40 text-purple-300 font-mono">SPIDER PLOT</span>
+                    </div>
+                    <canvas id="radarGraphCanvas" width="350" height="290" class="w-full max-w-[350px] h-auto"></canvas>
+                </div>
+
+                <div class="lg:col-span-7 bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs sm:text-sm font-bold text-cyan-300 uppercase">2. Score & Consciousness Velocity Timeline</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 border border-cyan-500/40 text-cyan-300 font-mono">TIME-SERIES</span>
+                        </div>
+                        <canvas id="timelineGraphCanvas" width="540" height="175" class="w-full h-auto rounded-xl bg-slate-900/50 border border-slate-800/80"></canvas>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-slate-800/90">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <h3 class="text-xs sm:text-sm font-bold text-emerald-300 uppercase">3. Solfeggio Frequency Energy Harvest (396Hz – 963Hz)</h3>
+                        </div>
+                        <canvas id="barGraphCanvas" width="540" height="120" class="w-full h-auto rounded-xl bg-slate-900/50 border border-slate-800/80"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SINGLE-FILE PHOTO PACKER & APK EXPORT MODAL -->
+    <div id="packerModal" class="hidden overlay-screen" style="z-index: 41;">
+        <div class="modal-card max-w-3xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div>
+                    <h2 class="font-cinzel text-lg sm:text-2xl font-black text-amber-300">
+                        📦 SINGLE-FILE PHOTO PACKER & APK BUILDER
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-0.5">
+                        Embed your 4 gallery images permanently inside a single `.html` file or use the built-in v4.0 procedural artwork.
+                    </p>
+                </div>
+                <button id="btnClosePacker" class="btn-action px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-600">
+                    ✕ Close
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <label class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/90 border border-amber-500/40 cursor-pointer">
+                    <img id="previewPack_explorer" class="w-14 h-14 rounded-xl object-cover border border-amber-400" src="" alt="Explorer">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-amber-300">1. Golden Explorer (1000062477.png)</div>
+                        <input type="file" accept="image/*" data-slot="explorer" class="slot-file-input mt-1 text-[11px] text-slate-300 w-full">
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/90 border border-cyan-500/40 cursor-pointer">
+                    <img id="previewPack_mystic" class="w-14 h-14 rounded-xl object-cover border border-cyan-400" src="" alt="Mystic">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-cyan-300">2. Ocean Mystic (1000062481.jpg)</div>
+                        <input type="file" accept="image/*" data-slot="mystic" class="slot-file-input mt-1 text-[11px] text-slate-300 w-full">
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/90 border border-orange-500/40 cursor-pointer">
+                    <img id="previewPack_outlaws" class="w-14 h-14 rounded-xl object-cover border border-orange-400" src="" alt="Outlaws">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-orange-300">3. Outlaw Duo (1000062478.png)</div>
+                        <input type="file" accept="image/*" data-slot="outlaws" class="slot-file-input mt-1 text-[11px] text-slate-300 w-full">
+                    </div>
+                </label>
+
+                <label class="flex items-center gap-3 p-3 rounded-2xl bg-slate-900/90 border border-purple-500/40 cursor-pointer">
+                    <img id="previewPack_chart" class="w-14 h-14 rounded-xl object-cover border border-purple-400" src="" alt="Chart">
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-purple-300">4. 7 Chakras Chart (1000062491.png)</div>
+                        <input type="file" accept="image/*" data-slot="chart" class="slot-file-input mt-1 text-[11px] text-slate-300 w-full">
+                    </div>
+                </label>
+            </div>
+
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3">
+                <button id="btnResetCustomPhotos" class="btn-action w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700">
+                    ↺ Reset to Built-In Art
+                </button>
+                <button id="btnDownloadStandaloneHTML" class="btn-gold w-full sm:w-auto text-xs sm:text-sm font-cinzel">
+                    ⬇ DOWNLOAD 1-FILE STANDALONE HTML
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7 CHAKRAS CODEX / ALGORITHM CHART MODAL -->
+    <div id="codexModal" class="hidden overlay-screen" style="z-index: 41;">
+        <div class="modal-card">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                <div>
+                    <h2 class="font-cinzel text-lg sm:text-2xl font-black text-amber-300">
+                        7 CHAKRAS • ENERGY, INSTRUMENT & CONSCIOUSNESS CHART
+                    </h2>
+                    <p class="text-xs text-slate-400">Tap any Chakra row to audition its custom Web Audio instrument!</p>
+                </div>
+                <button id="btnCloseCodex" class="btn-action px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs border border-slate-600">
+                    ✕ Close
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+                <div class="bg-slate-950 rounded-2xl p-2 border border-purple-500/30 flex items-center justify-center">
+                    <img id="codexChartImg" src="1000062491.png" alt="7 Chakras Chart" class="w-full h-auto max-h-[65vh] object-contain rounded-xl">
+                </div>
+                <div id="codexChakraList" class="space-y-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER / TEMPLE COMPLETION MODAL -->
+    <div id="gameOverModal" class="hidden overlay-screen" style="z-index: 39;">
+        <div class="modal-card max-w-2xl text-center">
+            <h2 class="font-cinzel text-2xl sm:text-3xl font-black text-amber-300">ASTRAL VESSEL DISRUPTED</h2>
+            <p id="gameOverReason" class="text-xs text-slate-400 mt-1 mb-3">Your vessel encountered a Karmic Shadow obstacle.</p>
+
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3">
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+                    <div class="text-[10px] uppercase text-slate-400">Score</div>
+                    <div id="finalScoreVal" class="font-cinzel text-xl font-black text-amber-400">0</div>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+                    <div class="text-[10px] uppercase text-slate-400">Distance</div>
+                    <div id="finalDistanceVal" class="font-cinzel text-xl font-bold text-white">0m</div>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+                    <div class="text-[10px] uppercase text-slate-400">Chakras</div>
+                    <div id="finalChakrasVal" class="font-cinzel text-xl font-bold text-purple-300">0</div>
+                </div>
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5">
+                    <div class="text-[10px] uppercase text-slate-400">Harmony</div>
+                    <div id="finalHarmonyVal" class="font-cinzel text-xl font-bold text-emerald-400">100%</div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2.5 mt-4">
+                <button id="btnChangeAvatar" class="btn-action flex-1 py-3 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-600">
+                    👤 Main Menu & Mode
+                </button>
+                <button id="btnOpenFullAnalyticsFromGO" class="btn-action flex-1 py-3 px-4 rounded-xl bg-emerald-950 hover:bg-emerald-900 text-emerald-300 font-bold text-xs border border-emerald-500/50">
+                    📊 Telemetry Graphs
+                </button>
+                <button id="btnPlayAgain" class="btn-gold flex-1 py-3 px-6 font-cinzel font-black text-sm">
+                    🔄 RESPAWN IN WORLD
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /*************************************************************************
+         * 0. SELF-HEALING ERROR GUARD & CROSS-BROWSER CANVAS HELPERS (v4.1)
+         *************************************************************************/
+        window.onerror = function (msg, url, lineNo, columnNo, error) {
+            console.warn('[v4.1 Self-Healing Guard Caught]:', msg, 'at line', lineNo);
+            return true; // Prevent uncaught errors from halting execution
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+            console.warn('[v4.1 Promise Guard Caught]:', event.reason);
+            event.preventDefault();
+        });
+
+        // Cross-browser rounded rectangle helper (avoids ctx.roundRect crashes on older WebViews)
+        function drawRoundRect(ctx, x, y, w, h, r) {
+            if (!ctx) return;
+            const radius = Math.max(0, Math.min(r || 0, Math.min(w, h) / 2));
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + w - radius, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+            ctx.lineTo(x + w, y + h - radius);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+            ctx.lineTo(x + radius, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+        }
+
+        // Safe localStorage wrapper for strict mobile WebViews / sandboxed iframes
+        function safeStorageGet(key, fallback = null) {
+            try {
+                const val = window.localStorage.getItem(key);
+                return val !== null ? val : fallback;
+            } catch (e) {
+                return fallback;
+            }
+        }
+        function safeStorageSet(key, val) {
+            try {
+                window.localStorage.setItem(key, val);
+            } catch (e) {}
+        }
+        function safeStorageRemove(key) {
+            try {
+                window.localStorage.removeItem(key);
+            } catch (e) {}
+        }
+
+        /*__BAKED_ASSETS_START__*/
+        const BAKED_CUSTOM_ASSETS = {
+            explorer: null,
+            mystic: null,
+            outlaws: null,
+            chart: null
+        };
+        /*__BAKED_ASSETS_END__*/
+
+        function generateAvatarPortraitDataURL(type) {
+            const c = document.createElement('canvas');
+            c.width = type === 'chart' ? 640 : 420;
+            c.height = type === 'chart' ? 800 : 420;
+            const g = c.getContext('2d');
+
+            if (type === 'serpent') {
+                // Kundalini Naga Serpent Portrait
+                const bg = g.createRadialGradient(210, 210, 20, 210, 210, 260);
+                bg.addColorStop(0, '#064e3b');
+                bg.addColorStop(0.55, '#022c22');
+                bg.addColorStop(1, '#020617');
+                g.fillStyle = bg;
+                g.fillRect(0, 0, 420, 420);
+
+                // Glowing Chakra Halo Rings
+                g.strokeStyle = 'rgba(52, 211, 153, 0.45)';
+                g.lineWidth = 3;
+                g.beginPath(); g.arc(210, 210, 165, 0, Math.PI * 2); g.stroke();
+
+                // Coiled Serpent Body Segments
+                const colors = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#06b6d4', '#6366f1', '#d946ef'];
+                for (let i = 14; i >= 0; i--) {
+                    const t = i / 14;
+                    const sx = 210 + Math.sin(t * Math.PI * 2.5) * (95 * t);
+                    const sy = 155 + t * 210;
+                    const rad = 26 + (1 - t) * 18;
+                    const segGrad = g.createRadialGradient(sx - 6, sy - 6, 3, sx, sy, rad);
+                    segGrad.addColorStop(0, '#a7f3d0');
+                    segGrad.addColorStop(0.5, '#10b981');
+                    segGrad.addColorStop(1, '#064e3b');
+                    g.fillStyle = segGrad;
+                    g.beginPath();
+                    g.arc(sx, sy, rad, 0, Math.PI * 2);
+                    g.fill();
+                    g.strokeStyle = colors[i % 7];
+                    g.lineWidth = 2.5;
+                    g.stroke();
+                }
+
+                // Royal Cobra Hood
+                const hoodGrad = g.createRadialGradient(210, 145, 10, 210, 145, 95);
+                hoodGrad.addColorStop(0, '#fde047');
+                hoodGrad.addColorStop(0.4, '#10b981');
+                hoodGrad.addColorStop(1, '#064e3b');
+                g.fillStyle = hoodGrad;
+                g.beginPath();
+                g.ellipse(210, 145, 86, 64, 0, 0, Math.PI * 2);
+                g.fill();
+                g.strokeStyle = '#fde047';
+                g.lineWidth = 3.5;
+                g.stroke();
+
+                // Cobra Head & Glowing Eyes
+                g.fillStyle = '#059669';
+                g.beginPath();
+                g.ellipse(210, 140, 44, 52, 0, 0, Math.PI * 2);
+                g.fill();
+                [-18, 18].forEach(ox => {
+                    g.fillStyle = '#fef08a';
+                    g.beginPath();
+                    g.ellipse(210 + ox, 132, 9, 5, ox > 0 ? -0.25 : 0.25, 0, Math.PI * 2);
+                    g.fill();
+                });
+                // Forked Crimson Tongue
+                g.strokeStyle = '#f43f5e';
+                g.lineWidth = 3.5;
+                g.beginPath();
+                g.moveTo(210, 190); g.lineTo(210, 222);
+                g.lineTo(198, 236); g.moveTo(210, 222); g.lineTo(222, 236);
+                g.stroke();
+                // Crown Gem
+                g.fillStyle = '#d946ef';
+                g.beginPath(); g.arc(210, 105, 10, 0, Math.PI * 2); g.fill();
+
+            } else if (type === 'phoenix') {
+                // Garuda Solar Phoenix Portrait
+                const bg = g.createRadialGradient(210, 210, 15, 210, 210, 240);
+                bg.addColorStop(0, '#fef08a');
+                bg.addColorStop(0.45, '#ea580c');
+                bg.addColorStop(1, '#1e0502');
+                g.fillStyle = bg;
+                g.fillRect(0, 0, 420, 420);
+
+                // Wings
+                g.fillStyle = '#f59e0b';
+                g.strokeStyle = '#fef08a';
+                g.lineWidth = 3;
+                [-1, 1].forEach(dir => {
+                    g.beginPath();
+                    g.moveTo(210, 220);
+                    g.quadraticCurveTo(210 + dir * 165, 90, 210 + dir * 190, 230);
+                    g.quadraticCurveTo(210 + dir * 110, 270, 210, 260);
+                    g.closePath();
+                    g.fill(); g.stroke();
+                });
+
+                // Phoenix Head & Golden Beak
+                g.fillStyle = '#fef08a';
+                g.beginPath(); g.arc(210, 175, 42, 0, Math.PI * 2); g.fill();
+                g.fillStyle = '#ea580c';
+                g.beginPath();
+                g.moveTo(196, 180); g.lineTo(224, 180); g.lineTo(210, 215); g.closePath();
+                g.fill();
+                [-16, 16].forEach(ox => {
+                    g.fillStyle = '#0284c7';
+                    g.beginPath(); g.arc(210 + ox, 168, 6, 0, Math.PI * 2); g.fill();
+                });
+
+            } else if (type === 'tiger') {
+                // Vajra White Tiger Portrait
+                const bg = g.createRadialGradient(210, 210, 20, 210, 210, 240);
+                bg.addColorStop(0, '#3b0764');
+                bg.addColorStop(0.6, '#1e1b4b');
+                bg.addColorStop(1, '#020617');
+                g.fillStyle = bg;
+                g.fillRect(0, 0, 420, 420);
+
+                // Tiger Head & Ears
+                g.fillStyle = '#f8fafc';
+                g.beginPath(); g.arc(145, 115, 28, 0, Math.PI * 2); g.arc(275, 115, 28, 0, Math.PI * 2); g.fill();
+                g.beginPath(); g.arc(210, 210, 92, 0, Math.PI * 2); g.fill();
+
+                // Black & Electric Purple Tiger Stripes
+                g.strokeStyle = '#1e1b4b';
+                g.lineWidth = 6;
+                [-1, 1].forEach(d => {
+                    for (let s = 0; s < 3; s++) {
+                        g.beginPath();
+                        g.moveTo(210 + d * 85, 170 + s * 28);
+                        g.lineTo(210 + d * 42, 180 + s * 28);
+                        g.stroke();
+                    }
+                });
+
+                // Glowing Cyan Lightning Eyes & Pink Nose
+                [-32, 32].forEach(ox => {
+                    g.fillStyle = '#38bdf8';
+                    g.beginPath(); g.ellipse(210 + ox, 190, 14, 9, 0, 0, Math.PI * 2); g.fill();
+                });
+                g.fillStyle = '#f43f5e';
+                g.beginPath(); g.moveTo(195, 225); g.lineTo(225, 225); g.lineTo(210, 245); g.fill();
+
+            } else if (type === 'explorer') {
+                const bg = g.createRadialGradient(210, 150, 20, 210, 210, 280);
+                bg.addColorStop(0, '#fef08a'); bg.addColorStop(0.5, '#ca8a04'); bg.addColorStop(1, '#271202');
+                g.fillStyle = bg; g.fillRect(0, 0, 420, 420);
+                g.fillStyle = '#eab308';
+                g.beginPath(); g.ellipse(210, 165, 56, 68, 0, 0, Math.PI * 2); g.fill();
+                g.fillStyle = '#a16207';
+                g.fillRect(110, 245, 200, 175);
+                [-22, 22].forEach(ox => {
+                    g.fillStyle = '#fef08a';
+                    g.beginPath(); g.arc(210 + ox, 158, 6, 0, Math.PI * 2); g.fill();
+                });
+
+            } else if (type === 'mystic') {
+                const bg = g.createLinearGradient(0, 0, 0, 420);
+                bg.addColorStop(0, '#38bdf8'); bg.addColorStop(0.6, '#0284c7'); bg.addColorStop(1, '#fef3c7');
+                g.fillStyle = bg; g.fillRect(0, 0, 420, 420);
+                g.fillStyle = '#1c1917';
+                g.beginPath(); g.arc(210, 210, 95, 0, Math.PI * 2); g.fill();
+                g.fillStyle = '#fdba74';
+                g.beginPath(); g.ellipse(210, 168, 48, 60, 0, 0, Math.PI * 2); g.fill();
+                g.fillStyle = '#f8fafc';
+                g.fillRect(130, 248, 160, 170);
+
+            } else if (type === 'outlaws') {
+                const bg = g.createLinearGradient(0, 0, 0, 420);
+                bg.addColorStop(0, '#d97706'); bg.addColorStop(1, '#271202');
+                g.fillStyle = bg; g.fillRect(0, 0, 420, 420);
+                g.fillStyle = '#d97706';
+                g.beginPath(); g.arc(130, 160, 40, 0, Math.PI * 2); g.arc(290, 160, 40, 0, Math.PI * 2); g.fill();
+                g.fillStyle = '#1c1917';
+                g.beginPath(); g.arc(210, 310, 55, 0, Math.PI * 2); g.fill();
+
+            } else if (type === 'chart') {
+                const bg = g.createRadialGradient(320, 400, 30, 320, 400, 480);
+                bg.addColorStop(0, '#3b0764'); bg.addColorStop(1, '#04020a');
+                g.fillStyle = bg; g.fillRect(0, 0, 640, 800);
+                g.fillStyle = '#fde047';
+                g.font = 'bold 26px Georgia, serif';
+                g.textAlign = 'center';
+                g.fillText('7 CHAKRAS • SOLFEGGIO & CONSCIOUSNESS', 320, 48);
+                const cols = ['#d946ef', '#6366f1', '#06b6d4', '#22c55e', '#eab308', '#f97316', '#ef4444'];
+                cols.forEach((col, idx) => {
+                    const y = 120 + idx * 92;
+                    g.fillStyle = col;
+                    g.beginPath(); g.arc(320, y, 28, 0, Math.PI * 2); g.fill();
+                });
+            }
+            return c.toDataURL('image/jpeg', 0.9);
+        }
+
+        const PROCEDURAL_URIS = {
+            serpent: generateAvatarPortraitDataURL('serpent'),
+            phoenix: generateAvatarPortraitDataURL('phoenix'),
+            tiger: generateAvatarPortraitDataURL('tiger'),
+            explorer: generateAvatarPortraitDataURL('explorer'),
+            mystic: generateAvatarPortraitDataURL('mystic'),
+            outlaws: generateAvatarPortraitDataURL('outlaws'),
+            chart: generateAvatarPortraitDataURL('chart')
+        };
+
+        /*************************************************************************
+         * 1. 7 CHAKRAS DEFINITIONS WITH DISTINCT INSTRUMENT TIMBRES (v4.0)
+         *************************************************************************/
+        const CHAKRAS = [
+            {
+                id: 1, name: 'Muladhara', short: 'Root', title: 'Root Chakra',
+                mantra: 'लँ', romaji: 'LAM', points: 10, freq: 396,
+                instrument: 'Tibetan Tribal Earth Drum & Sub-Drone',
+                color: '#ef4444', glow: 'rgba(239, 68, 68, 0.85)',
+                element: 'Earth', quality: 'Stability & Grounding',
+                shrineX: -1150, shrineY: -1100
+            },
+            {
+                id: 2, name: 'Svadhisthana', short: 'Sacral', title: 'Sacral Chakra',
+                mantra: 'वँ', romaji: 'VAM', points: 20, freq: 417,
+                instrument: 'Liquid Waterimba & Kalimba Pluck',
+                color: '#f97316', glow: 'rgba(249, 115, 22, 0.85)',
+                element: 'Water', quality: 'Creative Flow',
+                shrineX: -1200, shrineY: 1150
+            },
+            {
+                id: 3, name: 'Manipura', short: 'Solar', title: 'Solar Plexus',
+                mantra: 'रँ', romaji: 'RAM', points: 30, freq: 528,
+                instrument: 'Agni Fire Brass Gong & Power Chord',
+                color: '#eab308', glow: 'rgba(234, 179, 8, 0.85)',
+                element: 'Fire', quality: 'Willpower & Transformation',
+                shrineX: 1150, shrineY: 1150
+            },
+            {
+                id: 4, name: 'Anahata', short: 'Heart', title: 'Heart Chakra',
+                mantra: 'यँ', romaji: 'YAM', points: 40, freq: 639,
+                instrument: 'Emerald Harp Arpeggio & Bansuri Swell',
+                color: '#22c55e', glow: 'rgba(34, 197, 94, 0.85)',
+                element: 'Air', quality: 'Love & Coherence',
+                shrineX: -480, shrineY: 0
+            },
+            {
+                id: 5, name: 'Vishuddha', short: 'Throat', title: 'Throat Chakra',
+                mantra: 'हँ', romaji: 'HAM', points: 50, freq: 741,
+                instrument: 'Etheric Choir Formant & Wind Chimes',
+                color: '#06b6d4', glow: 'rgba(6, 182, 212, 0.85)',
+                element: 'Ether', quality: 'Truth & Expression',
+                shrineX: 480, shrineY: 0
+            },
+            {
+                id: 6, name: 'Ajna', short: '3rd Eye', title: 'Third Eye',
+                mantra: 'ॐ', romaji: 'OM', points: 75, freq: 852,
+                instrument: 'Binaural Singing Bowl & FM Crystal Bell',
+                color: '#6366f1', glow: 'rgba(99, 102, 241, 0.85)',
+                element: 'Light', quality: 'Intuition & Inner Vision',
+                shrineX: 1150, shrineY: -1150
+            },
+            {
+                id: 7, name: 'Sahasrara', short: 'Crown', title: 'Crown Chakra',
+                mantra: 'ॐ', romaji: 'OM', points: 100, freq: 963,
+                instrument: 'Celestial 7-Voice Angelic Shimmer Pad',
+                color: '#d946ef', glow: 'rgba(217, 70, 239, 0.92)',
+                element: 'Cosmic', quality: 'Unity & Higher Self',
+                shrineX: 0, shrineY: -650
+            }
+        ];
+
+        const CHARACTERS = {
+            serpent: {
+                key: 'serpent', name: 'Kundalini Naga Serpent', isCreature: true,
+                biomeName: 'Emerald Naga Sanctuary', primaryColor: '#10b981',
+                skyTop: '#02140e', skyMid: '#064e3b', skyHorizon: '#10b981',
+                roadNear: '#051f18', roadFar: '#064e3b', pillarColor: '#042f2e',
+                jumpBoost: 1.12, laneSpeed: 15.0, magnetRadius: 1.35, topSpeed: 390
+            },
+            phoenix: {
+                key: 'phoenix', name: 'Garuda Solar Phoenix', isCreature: true,
+                biomeName: 'Solar Sky Citadel', primaryColor: '#f59e0b',
+                skyTop: '#1a0602', skyMid: '#7c2d12', skyHorizon: '#f59e0b',
+                roadNear: '#270e05', roadFar: '#7c2d12', pillarColor: '#431407',
+                jumpBoost: 1.3, laneSpeed: 16.0, magnetRadius: 1.15, topSpeed: 420
+            },
+            tiger: {
+                key: 'tiger', name: 'Vajra White Tiger', isCreature: true,
+                biomeName: 'Himalayan Thunder Peak', primaryColor: '#a855f7',
+                skyTop: '#090418', skyMid: '#3b0764', skyHorizon: '#a855f7',
+                roadNear: '#130924', roadFar: '#3b0764', pillarColor: '#2e1065',
+                jumpBoost: 1.22, laneSpeed: 18.0, magnetRadius: 1.0, topSpeed: 435
+            },
+            explorer: {
+                key: 'explorer', name: 'Golden Explorer', isCreature: false,
+                biomeName: 'Eldorado Golden Jungle', primaryColor: '#eab308',
+                skyTop: '#090602', skyMid: '#3b2106', skyHorizon: '#ca8a04',
+                roadNear: '#1c1208', roadFar: '#422607', pillarColor: '#362209',
+                jumpBoost: 1.0, laneSpeed: 13.0, magnetRadius: 1.5, topSpeed: 360
+            },
+            mystic: {
+                key: 'mystic', name: 'Ocean Mystic', isCreature: false,
+                biomeName: 'Azure Coastal Sanctuary', primaryColor: '#06b6d4',
+                skyTop: '#030914', skyMid: '#072a47', skyHorizon: '#0284c7',
+                roadNear: '#081c29', roadFar: '#0c3b54', pillarColor: '#0e3547',
+                jumpBoost: 1.06, laneSpeed: 13.5, magnetRadius: 0.85, topSpeed: 365
+            },
+            outlaws: {
+                key: 'outlaws', name: 'Outlaw Duo & Hound', isCreature: false,
+                biomeName: 'Sepia Canyon Saloon', primaryColor: '#f97316',
+                skyTop: '#120703', skyMid: '#451a03', skyHorizon: '#d97706',
+                roadNear: '#1f0f06', roadFar: '#4a2109', pillarColor: '#3d1c0a',
+                jumpBoost: 1.18, laneSpeed: 17.5, magnetRadius: 0.95, topSpeed: 385
+            }
+        };
+
+        const runtimeAssets = {
+            explorer: BAKED_CUSTOM_ASSETS.explorer || null,
+            mystic: BAKED_CUSTOM_ASSETS.mystic || null,
+            outlaws: BAKED_CUSTOM_ASSETS.outlaws || null,
+            chart: BAKED_CUSTOM_ASSETS.chart || null
+        };
+
+        ['explorer', 'mystic', 'outlaws', 'chart'].forEach(slot => {
+            if (!runtimeAssets[slot]) {
+                const s = safeStorageGet('chakra_run_asset_' + slot, null);
+                if (s) runtimeAssets[slot] = s;
+            }
+        });
+
+        const loadedImages = {};
+
+        function loadAllGameImages() {
+            const fileMap = {
+                serpent: PROCEDURAL_URIS.serpent,
+                phoenix: PROCEDURAL_URIS.phoenix,
+                tiger: PROCEDURAL_URIS.tiger,
+                explorer: runtimeAssets.explorer || '1000062477.png',
+                mystic: runtimeAssets.mystic || '1000062481.jpg',
+                outlaws: runtimeAssets.outlaws || '1000062478.png',
+                chart: runtimeAssets.chart || '1000062491.png'
+            };
+
+            Object.keys(fileMap).forEach(slot => {
+                const img = new Image();
+                img.onload = () => syncDOMPreviews(slot, img.src);
+                img.onerror = () => {
+                    if (img.src !== PROCEDURAL_URIS[slot]) img.src = PROCEDURAL_URIS[slot];
+                };
+                img.src = fileMap[slot];
+                loadedImages[slot] = img;
+            });
+        }
+
+        function syncDOMPreviews(slot, src) {
+            if (slot === 'chart') {
+                const el = document.getElementById('codexChartImg');
+                if (el) el.src = src;
+            } else {
+                const cardEl = document.getElementById('cardImg_' + slot);
+                if (cardEl) cardEl.src = src;
+            }
+            const packEl = document.getElementById('previewPack_' + slot);
+            if (packEl) packEl.src = src;
+        }
+
+        loadAllGameImages();
+
+        /*************************************************************************
+         * 2. MULTI-INSTRUMENT 7-CHAKRA WEB AUDIO SYNTHESIZER & OSCILLOSCOPE (v4.1)
+         * Fixed class syntax & wrapped all Web Audio operations in safe try/catch!
+         *************************************************************************/
+        class MultiChakraSynth {
+            constructor() {
+                this.ctx = null;
+                this.analyser = null;
+                this.enabled = true;
+                this.lastPlayedChakra = null;
+            }
+
+            init() {
+                try {
+                    if (!this.ctx) {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        if (AudioCtx) {
+                            this.ctx = new AudioCtx();
+                            this.analyser = this.ctx.createAnalyser();
+                            this.analyser.fftSize = 512;
+                            this.analyser.connect(this.ctx.destination);
+                        }
+                    }
+                    if (this.ctx && this.ctx.state === 'suspended') {
+                        const resumePromise = this.ctx.resume();
+                        if (resumePromise && typeof resumePromise.catch === 'function') {
+                            resumePromise.catch(() => {});
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            outNode() {
+                if (!this.ctx) return null;
+                return this.analyser || this.ctx.destination;
+            }
+
+            // Distinct acoustic synthesis per Chakra (0 to 6)
+            playChakraTone(chakraIndex) {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+
+                    const idx = Math.max(0, Math.min(6, chakraIndex || 0));
+                    const ch = CHAKRAS[idx];
+                    this.lastPlayedChakra = ch;
+                    const now = this.ctx.currentTime;
+                    const dest = this.outNode();
+                    if (!dest) return;
+
+                    const oscLabel = document.getElementById('oscActiveLabel');
+                    if (oscLabel) {
+                        oscLabel.textContent = `🔊 Playing #${ch.id} ${ch.name} (${ch.freq}Hz) — ${ch.instrument}`;
+                        oscLabel.style.color = ch.color;
+                    }
+
+                    if (idx === 0) {
+                        // 1. MULADHARA (396Hz): Deep Tribal Earth Drum + Didgeridoo Sub-Bass
+                        const drumOsc = this.ctx.createOscillator();
+                        const subOsc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+
+                        drumOsc.type = 'sine';
+                        drumOsc.frequency.setValueAtTime(145, now);
+                        drumOsc.frequency.exponentialRampToValueAtTime(48, now + 0.35);
+
+                        subOsc.type = 'sawtooth';
+                        subOsc.frequency.setValueAtTime(ch.freq / 4, now);
+
+                        const filter = this.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.setValueAtTime(260, now);
+
+                        gain.gain.setValueAtTime(0.32, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+
+                        drumOsc.connect(gain);
+                        subOsc.connect(filter);
+                        filter.connect(gain);
+                        gain.connect(dest);
+
+                        drumOsc.start(now); subOsc.start(now);
+                        drumOsc.stop(now + 0.66); subOsc.stop(now + 0.66);
+
+                    } else if (idx === 1) {
+                        // 2. SVADHISTHANA (417Hz): Liquid Waterimba / Kalimba Pluck
+                        [1, 1.5, 2].forEach((harm, i) => {
+                            const osc = this.ctx.createOscillator();
+                            const filter = this.ctx.createBiquadFilter();
+                            const gain = this.ctx.createGain();
+                            const t0 = now + i * 0.055;
+
+                            osc.type = 'triangle';
+                            osc.frequency.setValueAtTime(ch.freq * harm, t0);
+                            osc.frequency.exponentialRampToValueAtTime(ch.freq * harm * 1.03, t0 + 0.25);
+
+                            filter.type = 'bandpass';
+                            filter.Q.value = 6;
+                            filter.frequency.setValueAtTime(300, t0);
+                            filter.frequency.exponentialRampToValueAtTime(1800, t0 + 0.3);
+
+                            gain.gain.setValueAtTime(0.22 / (i + 1), t0);
+                            gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.45);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(dest);
+                            osc.start(t0);
+                            osc.stop(t0 + 0.46);
+                        });
+
+                    } else if (idx === 2) {
+                        // 3. MANIPURA (528Hz): Agni Fire Brass Gong & Power Fifth
+                        const ratios = [1, 1.498, 2.0, 2.71];
+                        ratios.forEach((r, i) => {
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = i < 2 ? 'sawtooth' : 'square';
+                            osc.frequency.setValueAtTime(ch.freq * r * 0.5, now);
+
+                            const filter = this.ctx.createBiquadFilter();
+                            filter.type = 'lowpass';
+                            filter.frequency.setValueAtTime(2400, now);
+                            filter.frequency.exponentialRampToValueAtTime(420, now + 0.7);
+
+                            gain.gain.setValueAtTime(0.12, now);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+
+                            osc.connect(filter);
+                            filter.connect(gain);
+                            gain.connect(dest);
+                            osc.start(now);
+                            osc.stop(now + 0.76);
+                        });
+
+                    } else if (idx === 3) {
+                        // 4. ANAHATA (639Hz): Lush Emerald Harp Arpeggio & Bansuri Flute Swell
+                        const notes = [1, 1.25, 1.5, 2.0];
+                        notes.forEach((mult, i) => {
+                            const t0 = now + i * 0.065;
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = 'sine';
+                            osc.frequency.setValueAtTime(ch.freq * mult * 0.5, t0);
+
+                            gain.gain.setValueAtTime(0.01, t0);
+                            gain.gain.linearRampToValueAtTime(0.16, t0 + 0.04);
+                            gain.gain.exponentialRampToValueAtTime(0.001, t0 + 0.65);
+
+                            osc.connect(gain);
+                            gain.connect(dest);
+                            osc.start(t0);
+                            osc.stop(t0 + 0.66);
+                        });
+
+                    } else if (idx === 4) {
+                        // 5. VISHUDDHA (741Hz): Etheric Choir Formant Synth & Wind Chime
+                        const formants = [741, 1111.5, 1482];
+                        formants.forEach((f, i) => {
+                            const osc = this.ctx.createOscillator();
+                            const lfo = this.ctx.createOscillator();
+                            const lfoGain = this.ctx.createGain();
+                            const gain = this.ctx.createGain();
+
+                            osc.type = i === 0 ? 'triangle' : 'sine';
+                            osc.frequency.setValueAtTime(f, now);
+
+                            lfo.frequency.value = 5.5;
+                            lfoGain.gain.value = 6;
+                            lfo.connect(lfoGain);
+                            lfoGain.connect(osc.frequency);
+
+                            gain.gain.setValueAtTime(0.005, now);
+                            gain.gain.linearRampToValueAtTime(0.11 / (i + 1), now + 0.12);
+                            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.75);
+
+                            osc.connect(gain);
+                            gain.connect(dest);
+                            osc.start(now); lfo.start(now);
+                            osc.stop(now + 0.76); lfo.stop(now + 0.76);
+                        });
+
+                    } else if (idx === 5) {
+                        // 6. AJNA (852Hz): Binaural Tibetan Singing Bowl + FM Crystalline Bell
+                        const carrier = this.ctx.createOscillator();
+                        const binaural = this.ctx.createOscillator();
+                        const mod = this.ctx.createOscillator();
+                        const modGain = this.ctx.createGain();
+                        const gain = this.ctx.createGain();
+
+                        carrier.type = 'sine';
+                        carrier.frequency.setValueAtTime(ch.freq, now);
+                        binaural.type = 'sine';
+                        binaural.frequency.setValueAtTime(ch.freq + 7.83, now);
+
+                        mod.type = 'sine';
+                        mod.frequency.setValueAtTime(ch.freq * 2.41, now);
+                        modGain.gain.setValueAtTime(140, now);
+                        modGain.gain.exponentialRampToValueAtTime(1, now + 0.35);
+
+                        mod.connect(modGain);
+                        modGain.connect(carrier.frequency);
+
+                        gain.gain.setValueAtTime(0.18, now);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.95);
+
+                        carrier.connect(gain);
+                        binaural.connect(gain);
+                        gain.connect(dest);
+
+                        carrier.start(now); binaural.start(now); mod.start(now);
+                        carrier.stop(now + 0.96); binaural.stop(now + 0.96); mod.stop(now + 0.96);
+
+                    } else if (idx === 6) {
+                        // 7. SAHASRARA (963Hz): Cosmic 7-Voice Angelic Shimmer Pad
+                        const ratios = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
+                        ratios.forEach((r, i) => {
+                            const t0 = now + i * 0.04;
+                            const osc = this.ctx.createOscillator();
+                            const gain = this.ctx.createGain();
+                            osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+                            osc.frequency.setValueAtTime(ch.freq * r, t0);
+
+                            gain.gain.setValueAtTime(0.005, t0);
+                            gain.gain.linearRampToValueAtTime(0.09, t0 + 0.15);
+                            gain.gain.exponentialRampToValueAtTime(0.001, t0 + 1.15);
+
+                            osc.connect(gain);
+                            gain.connect(dest);
+                            osc.start(t0);
+                            osc.stop(t0 + 1.16);
+                        });
+                    }
+                } catch (e) {}
+            }
+
+            playJump() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(195, now);
+                    osc.frequency.exponentialRampToValueAtTime(480, now + 0.16);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.outNode());
+                    osc.start(now);
+                    osc.stop(now + 0.19);
+                } catch (e) {}
+            }
+
+            playSlide() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(340, now);
+                    osc.frequency.exponentialRampToValueAtTime(120, now + 0.16);
+                    gain.gain.setValueAtTime(0.12, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.17);
+                    osc.connect(gain);
+                    gain.connect(this.outNode());
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } catch (e) {}
+            }
+
+            playPulseRoar() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.exponentialRampToValueAtTime(55, now + 0.45);
+                    gain.gain.setValueAtTime(0.22, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.46);
+                    osc.connect(gain);
+                    gain.connect(this.outNode());
+                    osc.start(now);
+                    osc.stop(now + 0.47);
+                } catch (e) {}
+            }
+
+            playEnlightenment() {
+                if (!this.enabled) return;
+                for (let i = 0; i < 7; i++) {
+                    setTimeout(() => this.playChakraTone(i), i * 110);
+                }
+            }
+
+            playCrash() {
+                if (!this.enabled) return;
+                try {
+                    this.init();
+                    if (!this.ctx) return;
+                    const now = this.ctx.currentTime;
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(135, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.36);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+                    osc.connect(gain);
+                    gain.connect(this.outNode());
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } catch (e) {}
+            }
+        }
+
+        const sfx = new MultiChakraSynth();
+
+        // Render Live Oscilloscope in Sound Lab Modal
+        function renderOscilloscope() {
+            const modal = document.getElementById('soundLabModal');
+            if (!modal || modal.classList.contains('hidden')) return;
+            const c = document.getElementById('oscilloscopeCanvas');
+            if (!c) return;
+            const g = c.getContext('2d');
+            if (!g) return;
+            const w = c.width;
+            const h = c.height;
+            g.clearRect(0, 0, w, h);
+
+            g.strokeStyle = 'rgba(56, 189, 248, 0.14)';
+            g.lineWidth = 1;
+            g.beginPath();
+            g.moveTo(0, h / 2); g.lineTo(w, h / 2);
+            g.stroke();
+
+            if (sfx.analyser) {
+                try {
+                    const bufferLength = sfx.analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    sfx.analyser.getByteTimeDomainData(dataArray);
+
+                    g.lineWidth = 2.5;
+                    g.strokeStyle = sfx.lastPlayedChakra ? sfx.lastPlayedChakra.color : '#22d3ee';
+                    g.beginPath();
+                    const sliceWidth = w / Math.max(1, bufferLength);
+                    let x = 0;
+                    for (let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 128.0;
+                        const y = (v * h) / 2;
+                        if (i === 0) g.moveTo(x, y);
+                        else g.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+                    g.stroke();
+                } catch (e) {}
+            }
+        }
+
+        /*************************************************************************
+         * 3. DUAL-MODE STATE: GTA OPEN WORLD (4000x4000) & 3D RUNNER
+         *************************************************************************/
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let selectedCharKey = 'serpent';
+        let activeGameMode = 'openworld';
+        let highScore = parseInt(safeStorageGet('chakra_run_highscore', '0'), 10) || 0;
+        let runHistory = [];
+        try {
+            const sh = safeStorageGet('chakra_run_history_v3', null);
+            if (sh) runHistory = JSON.parse(sh);
+        } catch (e) {}
+
+        const WORLD_HALF = 2000;
+
+        const game = {
+            running: false,
+            mode: 'openworld',
+            score: 0,
+            distance: 0,
+            speed: 32,
+            baseSpeed: 32,
+            maxSpeed: 72,
+            peakSpeed: 32,
+            time: 0,
+            runElapsed: 0,
+            HigherSelfTimer: 0,
+            auraColor: '#10b981',
+            collectedSet: new Set(),
+            chakraCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0 },
+            totalChakrasCollected: 0,
+            telemetrySamples: [],
+            telemetryTimer: 0,
+
+            // 3D Runner Player State
+            player: {
+                lane: 0,
+                currentX: 0,
+                y: 0,
+                vy: 0,
+                isJumping: false,
+                slideTimer: 0,
+                shieldActive: false,
+                bobPhase: 0
+            },
+            entities: [],
+            particles: [],
+            pillars: [],
+            stars: [],
+            spawnTimer: 0,
+
+            // GTA Open-World State (v4.0)
+            ow: {
+                x: 0,
+                y: 120,
+                vx: 0,
+                vy: 0,
+                angle: -Math.PI / 2,
+                speed: 0,
+                zJump: 0,
+                vzJump: 0,
+                boostTimer: 0,
+                pulseWaveRadius: 0,
+                karmaStars: 0,
+                karmaDecayTimer: 0,
+                mountedVehicle: null,
+                serpentLength: 16,
+                segments: [], // [{x, y, color}] for Kundalini Snake & Trail
+                orbs: [],
+                vehicles: [],
+                stalkers: [],
+                trees: [],
+                portal: { x: 0, y: 0, radius: 75 },
+                waypoint: { x: -1150, y: -1100, active: true, label: 'Root Shrine' }
+            }
+        };
+
+        for (let i = 0; i < 70; i++) {
+            game.stars.push({
+                xFrac: Math.random(),
+                yFrac: Math.random() * 0.35,
+                size: 0.8 + Math.random() * 2.2,
+                twinkleSpeed: 1.5 + Math.random() * 3.5,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+
+        function resizeCanvas() {
+            if (!canvas) return;
+            canvas.width = Math.max(320, window.innerWidth || 800);
+            canvas.height = Math.max(240, window.innerHeight || 600);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Touch Swipe Support on Main Canvas for 3D Runner Mode
+        let touchStartX = 0;
+        let touchStartY = 0;
+        canvas.addEventListener('touchstart', (e) => {
+            if (!e.touches || !e.touches[0]) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        canvas.addEventListener('touchend', (e) => {
+            if (!game.running || game.mode !== 'runner' || !e.changedTouches || !e.changedTouches[0]) return;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.hypot(dx, dy) < 28) return;
+            if (Math.abs(dx) > Math.abs(dy)) {
+                moveLane(dx > 0 ? 1 : -1);
+            } else {
+                if (dy < 0) triggerJump();
+                else triggerSlide();
+            }
+        }, { passive: true });
+
+        /*************************************************************************
+         * 4. INITIALIZE GTA OPEN-WORLD MAP ENTITIES (SHRINES, MOUNTS, GUARDIANS)
+         *************************************************************************/
+        function initOpenWorldSandbox() {
+            const ow = game.ow;
+            ow.x = 0;
+            ow.y = 220;
+            ow.angle = -Math.PI / 2;
+            ow.speed = 0;
+            ow.zJump = 0;
+            ow.vzJump = 0;
+            ow.boostTimer = 0;
+            ow.pulseWaveRadius = 0;
+            ow.karmaStars = 0;
+            ow.mountedVehicle = null;
+            ow.serpentLength = 16;
+            ow.segments = [];
+            for (let i = 0; i < 40; i++) {
+                ow.segments.push({ x: ow.x, y: ow.y + i * 8 });
+            }
+
+            // Populate 95 Chakra Orbs across the 4 Districts & Roads
+            ow.orbs = [];
+            for (let i = 0; i < 95; i++) {
+                const ch = CHAKRAS[i % 7];
+                // Cluster some around their respective shrines, others across roads
+                let ox, oy;
+                if (i < 35) {
+                    ox = ch.shrineX + (Math.random() - 0.5) * 520;
+                    oy = ch.shrineY + (Math.random() - 0.5) * 520;
+                } else {
+                    ox = (Math.random() - 0.5) * 3500;
+                    oy = (Math.random() - 0.5) * 3500;
+                }
+                ow.orbs.push({
+                    x: ox,
+                    y: oy,
+                    chakra: ch,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
+
+            // Populate Rideable Mystical Mounts / Vehicles (GTA Style)
+            ow.vehicles = [
+                { id: 'v1', name: 'Solar Golden Chariot', icon: '🛞', x: -240, y: 180, angle: 0, color: '#fbbf24', topSpeed: 540 },
+                { id: 'v2', name: 'Giant Naga Glider', icon: '🐉', x: 260, y: 180, angle: Math.PI, color: '#10b981', topSpeed: 560 },
+                { id: 'v3', name: 'Azure Wave Board', icon: '🏄', x: -950, y: 900, angle: 0, color: '#06b6d4', topSpeed: 530 },
+                { id: 'v4', name: 'Outlaw Mustang Steed', icon: '🐎', x: 920, y: 920, angle: 0, color: '#f97316', topSpeed: 550 },
+                { id: 'v5', name: 'Astral Merkaba Craft', icon: '🛸', x: 0, y: -420, angle: 0, color: '#d946ef', topSpeed: 600 }
+            ];
+
+            // Populate Roaming Karmic Shadow Stalkers
+            ow.stalkers = [];
+            for (let i = 0; i < 12; i++) {
+                const angle = (i / 12) * Math.PI * 2;
+                const dist = 650 + Math.random() * 1100;
+                ow.stalkers.push({
+                    x: Math.cos(angle) * dist,
+                    y: Math.sin(angle) * dist,
+                    vx: 0,
+                    vy: 0,
+                    angle: Math.random() * Math.PI * 2,
+                    stunTimer: 0
+                });
+            }
+
+            // Populate Scenery Trees, Palms, Cacti & Lotus Pillars
+            ow.trees = [];
+            for (let i = 0; i < 140; i++) {
+                const tx = (Math.random() - 0.5) * 3700;
+                const ty = (Math.random() - 0.5) * 3700;
+                // Keep main cross-highways clear
+                if (Math.abs(tx) < 160 || Math.abs(ty) < 160) continue;
+                ow.trees.push({
+                    x: tx,
+                    y: ty,
+                    radius: 22 + Math.random() * 18,
+                    biome: getDistrictAt(tx, ty).id
+                });
+            }
+        }
+
+        function getDistrictAt(x, y) {
+            if (Math.hypot(x, y) < 420) {
+                return { id: 'nexus', name: '🏛️ Central Temple Nexus', color: '#a855f7' };
+            }
+            if (x < 0 && y < 0) return { id: 'jungle', name: '🌴 Eldorado Golden Jungle', color: '#eab308' };
+            if (x < 0 && y >= 0) return { id: 'coast', name: '🌊 Azure Coastal Sanctuary', color: '#06b6d4' };
+            if (x >= 0 && y >= 0) return { id: 'canyon', name: '🏜️ Red Dead Sepia Canyon', color: '#f97316' };
+            return { id: 'citadel', name: '🕉️ Cosmic Lotus Citadel', color: '#d946ef' };
+        }
+
+        /*************************************************************************
+         * 5. KEYBOARD & 360° TOUCH JOYSTICK INPUT CONTROLLERS
+         *************************************************************************/
+        const keysDown = {};
+        let joyVec = { x: 0, y: 0, active: false };
+
+        window.addEventListener('keydown', (e) => {
+            keysDown[e.key.toLowerCase()] = true;
+            if (!game.running) return;
+
+            if (game.mode === 'runner') {
+                switch (e.key) {
+                    case 'ArrowLeft': case 'a': case 'A': e.preventDefault(); moveLane(-1); break;
+                    case 'ArrowRight': case 'd': case 'D': e.preventDefault(); moveLane(1); break;
+                    case 'ArrowUp': case 'w': case 'W': case ' ': e.preventDefault(); triggerJump(); break;
+                    case 'ArrowDown': case 's': case 'S': e.preventDefault(); triggerSlide(); break;
+                }
+            } else {
+                if (e.key === ' ') { e.preventDefault(); triggerJump(); }
+                else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); toggleOpenWorldMount(); }
+                else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); triggerOpenWorldPulse(); }
+                else if (e.key === 'Shift') { e.preventDefault(); triggerSlide(); }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keysDown[e.key.toLowerCase()] = false;
+        });
+
+        // Virtual 360° Joystick Touch Handler
+        const joyZone = document.getElementById('virtualJoystickZone');
+        const joyKnob = document.getElementById('virtualJoystickKnob');
+
+        function handleJoystickTouch(e) {
+            if (!joyZone) return;
+            const rect = joyZone.getBoundingClientRect();
+            const cx = rect.left + rect.width / 2;
+            const cy = rect.top + rect.height / 2;
+            const touch = e.touches[0];
+            if (!touch) return;
+
+            const dx = touch.clientX - cx;
+            const dy = touch.clientY - cy;
+            const maxR = rect.width * 0.38;
+            const dist = Math.hypot(dx, dy);
+            const clamped = Math.min(dist, maxR);
+            const angle = Math.atan2(dy, dx);
+
+            const nx = Math.cos(angle) * (clamped / maxR);
+            const ny = Math.sin(angle) * (clamped / maxR);
+            joyVec.x = nx;
+            joyVec.y = ny;
+            joyVec.active = true;
+
+            joyKnob.style.transform = `translate(${nx * maxR}px, ${ny * maxR}px)`;
+        }
+
+        function resetJoystick() {
+            joyVec.x = 0;
+            joyVec.y = 0;
+            joyVec.active = false;
+            if (joyKnob) joyKnob.style.transform = 'translate(0px, 0px)';
+        }
+
+        joyZone.addEventListener('touchstart', (e) => { e.preventDefault(); handleJoystickTouch(e); }, { passive: false });
+        joyZone.addEventListener('touchmove', (e) => { e.preventDefault(); handleJoystickTouch(e); }, { passive: false });
+        joyZone.addEventListener('touchend', resetJoystick);
+        joyZone.addEventListener('touchcancel', resetJoystick);
+
+        // GTA Radar Minimap Click-to-Set GPS Waypoint
+        const radarCanvas = document.getElementById('gtaMinimapCanvas');
+        radarCanvas.addEventListener('click', (e) => {
+            const rect = radarCanvas.getBoundingClientRect();
+            const rx = ((e.clientX - rect.left) / rect.width) - 0.5;
+            const ry = ((e.clientY - rect.top) / rect.height) - 0.5;
+            const radarRange = 1750;
+            game.ow.waypoint.x = Math.max(-WORLD_HALF, Math.min(WORLD_HALF, game.ow.x + rx * 2 * radarRange));
+            game.ow.waypoint.y = Math.max(-WORLD_HALF, Math.min(WORLD_HALF, game.ow.y + ry * 2 * radarRange));
+            game.ow.waypoint.active = true;
+            game.ow.waypoint.label = 'Custom GPS Pin';
+            sfx.playChakraTone(5);
+            showAnnouncement('📍 GPS WAYPOINT SET', `Routing to (${Math.round(game.ow.waypoint.x)}, ${Math.round(game.ow.waypoint.y)})`, '#a855f7');
+        });
+
+        document.getElementById('btnClearWaypoint').addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Cycle waypoint through the 7 Chakra Shrines!
+            const nextId = ((game.ow.waypoint.shrineIdx || 0) % 7);
+            const ch = CHAKRAS[nextId];
+            game.ow.waypoint = {
+                x: ch.shrineX,
+                y: ch.shrineY,
+                active: true,
+                shrineIdx: nextId + 1,
+                label: `${ch.name} Shrine`
+            };
+            sfx.playChakraTone(nextId);
+            showAnnouncement(`📍 GPS: ${ch.name.toUpperCase()} SHRINE`, `Follow the purple GPS line on your GTA Radar!`, ch.color);
+        });
+
+        function toggleOpenWorldMount() {
+            if (!game.running || game.mode !== 'openworld') return;
+            const ow = game.ow;
+            if (ow.mountedVehicle) {
+                showAnnouncement(`🚶 DISMOUNTED ${ow.mountedVehicle.name.toUpperCase()}`, 'Returned to natural avatar movement', '#94a3b8');
+                ow.mountedVehicle.x = ow.x + 55;
+                ow.mountedVehicle.y = ow.y;
+                ow.mountedVehicle = null;
+                document.getElementById('hudMountName').textContent = selectedCharKey === 'serpent' ? 'Naga Slither' : 'On Foot';
+                sfx.playSlide();
+                return;
+            }
+
+            // Find closest vehicle within 130 units
+            let closest = null;
+            let bestDist = 135;
+            ow.vehicles.forEach(v => {
+                const d = Math.hypot(v.x - ow.x, v.y - ow.y);
+                if (d < bestDist) {
+                    bestDist = d;
+                    closest = v;
+                }
+            });
+
+            if (closest) {
+                ow.mountedVehicle = closest;
+                document.getElementById('hudMountName').textContent = `${closest.icon} ${closest.name}`;
+                sfx.playChakraTone(2);
+                showAnnouncement(`${closest.icon} MOUNTED ${closest.name.toUpperCase()}!`, 'Top Speed & Karma Protection Increased!', closest.color);
+            } else {
+                // Summon personal astral chariot if none nearby!
+                const summoned = {
+                    id: 'summon',
+                    name: 'Astral Naga Chariot',
+                    icon: '🛷',
+                    x: ow.x,
+                    y: ow.y,
+                    color: '#fde047',
+                    topSpeed: 545
+                };
+                ow.mountedVehicle = summoned;
+                document.getElementById('hudMountName').textContent = `🛷 Astral Chariot`;
+                sfx.playChakraTone(6);
+                showAnnouncement('🛷 SUMMONED ASTRAL CHARIOT!', 'Press F anytime to dismount', '#fde047');
+            }
+        }
+
+        function triggerOpenWorldPulse() {
+            if (!game.running) return;
+            if (game.mode === 'openworld') {
+                game.ow.pulseWaveRadius = 10;
+                sfx.playPulseRoar();
+                // Stun nearby stalkers and reduce 1 Karma star
+                game.ow.stalkers.forEach(st => {
+                    if (Math.hypot(st.x - game.ow.x, st.y - game.ow.y) < 380) {
+                        st.stunTimer = 5.0;
+                    }
+                });
+                if (game.ow.karmaStars > 0) {
+                    game.ow.karmaStars = Math.max(0, game.ow.karmaStars - 1);
+                    updateKarmaHUD();
+                }
+                showAnnouncement('💥 KUNDALINI SHOCKWAVE ROAR!', 'Nearby Shadow Stalkers stunned & Karma cleansed', '#e879f9');
+            } else {
+                triggerSlide();
+            }
+        }
+
+        document.getElementById('btnActionMount').addEventListener('click', toggleOpenWorldMount);
+        document.getElementById('btnActionPulse').addEventListener('click', triggerOpenWorldPulse);
+
+        /*************************************************************************
+         * 6. UPDATE OPEN-WORLD SANDBOX & MULTI-SEGMENT SERPENT PHYSICS (v4.0)
+         *************************************************************************/
+        function updateKarmaHUD() {
+            const container = document.getElementById('hudKarmaStars');
+            if (!container) return;
+            let html = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= game.ow.karmaStars) {
+                    html += `<span class="text-rose-400 animate-pulse drop-shadow-[0_0_6px_rgba(244,63,94,0.9)]">👁️</span>`;
+                } else {
+                    html += `<span class="opacity-25">👁️</span>`;
+                }
+            }
+            container.innerHTML = html;
+        }
+
+        function updateOpenWorld(dt) {
+            const ow = game.ow;
+            const charCfg = CHARACTERS[selectedCharKey];
+
+            // Compute desired steering vector from Keyboard or 360° Touch Joystick
+            let inputX = 0;
+            let inputY = 0;
+            if (keysDown['arrowleft'] || keysDown['a']) inputX -= 1;
+            if (keysDown['arrowright'] || keysDown['d']) inputX += 1;
+            if (keysDown['arrowup'] || keysDown['w']) inputY -= 1;
+            if (keysDown['arrowdown'] || keysDown['s']) inputY += 1;
+
+            if (joyVec.active) {
+                inputX = joyVec.x;
+                inputY = joyVec.y;
+            }
+
+            const inputMag = Math.min(1, Math.hypot(inputX, inputY));
+            let maxSpd = ow.mountedVehicle ? ow.mountedVehicle.topSpeed : charCfg.topSpeed;
+            if (ow.boostTimer > 0) {
+                ow.boostTimer = Math.max(0, ow.boostTimer - dt);
+                maxSpd *= 1.42;
+            }
+            if (game.HigherSelfTimer > 0) {
+                game.HigherSelfTimer = Math.max(0, game.HigherSelfTimer - dt);
+                maxSpd *= 1.3;
+                if (game.HigherSelfTimer === 0) updateChakraHUD();
+            }
+
+            // Check water slowdown in SW Coastal Sanctuary (unless Phoenix, Serpent, or Mounted)
+            const inWaterLake = (ow.x < -450 && ow.y > 450 && Math.hypot(ow.x + 1150, ow.y - 1150) < 420);
+            if (inWaterLake && selectedCharKey !== 'phoenix' && selectedCharKey !== 'serpent' && !ow.mountedVehicle) {
+                maxSpd *= 0.68;
+            }
+
+            if (inputMag > 0.08) {
+                const targetAngle = Math.atan2(inputY, inputX);
+                // Smooth angular interpolation
+                let diff = targetAngle - ow.angle;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                ow.angle += diff * Math.min(1, dt * 10.5);
+                ow.speed = Math.min(maxSpd, ow.speed + 680 * dt) * inputMag;
+            } else {
+                // If Kundalini Serpent, keep a gentle slither cruise or decelerate smoothly
+                ow.speed = Math.max(0, ow.speed - 520 * dt);
+            }
+
+            // Add subtle sinusoidal slither wave when playing as Kundalini Serpent
+            let moveAngle = ow.angle;
+            if (selectedCharKey === 'serpent' && !ow.mountedVehicle && ow.speed > 40) {
+                moveAngle += Math.sin(game.time * 9.5) * 0.16;
+            }
+
+            ow.vx = Math.cos(moveAngle) * ow.speed;
+            ow.vy = Math.sin(moveAngle) * ow.speed;
+            ow.x = Math.max(-WORLD_HALF + 40, Math.min(WORLD_HALF - 40, ow.x + ow.vx * dt));
+            ow.y = Math.max(-WORLD_HALF + 40, Math.min(WORLD_HALF - 40, ow.y + ow.vy * dt));
+
+            if (ow.mountedVehicle) {
+                ow.mountedVehicle.x = ow.x;
+                ow.mountedVehicle.y = ow.y;
+                ow.mountedVehicle.angle = ow.angle;
+            }
+
+            // Vertical Leap Physics
+            if (ow.zJump > 0 || ow.vzJump !== 0) {
+                ow.zJump += ow.vzJump * dt;
+                ow.vzJump -= 580 * dt;
+                if (ow.zJump <= 0) {
+                    ow.zJump = 0;
+                    ow.vzJump = 0;
+                }
+            }
+
+            // Shockwave Pulse Expansion
+            if (ow.pulseWaveRadius > 0) {
+                ow.pulseWaveRadius += 650 * dt;
+                if (ow.pulseWaveRadius > 420) ow.pulseWaveRadius = 0;
+            }
+
+            // Update Multi-Segment Kundalini Serpent / Trail Kinematics (Follow-the-leader IK)
+            if (ow.segments.length < ow.serpentLength) {
+                const tail = ow.segments[ow.segments.length - 1] || { x: ow.x, y: ow.y };
+                ow.segments.push({ x: tail.x, y: tail.y });
+            }
+            if (ow.segments.length > 0) {
+                ow.segments[0].x = ow.x;
+                ow.segments[0].y = ow.y;
+                const segSpacing = selectedCharKey === 'serpent' ? 13 : 9;
+                for (let i = 1; i < ow.segments.length; i++) {
+                    const prev = ow.segments[i - 1];
+                    const cur = ow.segments[i];
+                    const dx = prev.x - cur.x;
+                    const dy = prev.y - cur.y;
+                    const d = Math.hypot(dx, dy);
+                    if (d > segSpacing) {
+                        const a = Math.atan2(dy, dx);
+                        cur.x = prev.x - Math.cos(a) * segSpacing;
+                        cur.y = prev.y - Math.sin(a) * segSpacing;
+                    }
+                }
+            }
+
+            // Update Distance & Score
+            const stepMeters = (ow.speed * dt) * 0.12;
+            game.distance += stepMeters;
+            game.score += stepMeters * 0.4;
+            const scaledVel = Number((ow.speed * 0.12).toFixed(1));
+            if (scaledVel > game.peakSpeed) game.peakSpeed = scaledVel;
+
+            // Collect Chakra Orbs in Open World
+            const magnetDist = 65 * charCfg.magnetRadius + (ow.mountedVehicle ? 35 : 0);
+            for (let i = ow.orbs.length - 1; i >= 0; i--) {
+                const orb = ow.orbs[i];
+                const d = Math.hypot(orb.x - ow.x, orb.y - ow.y);
+                if (d < magnetDist) {
+                    orb.x += (ow.x - orb.x) * dt * 8.5;
+                    orb.y += (ow.y - orb.y) * dt * 8.5;
+                }
+                if (d < 36) {
+                    collectOpenWorldChakra(orb);
+                    // Respawn orb at a new location so the open world stays alive
+                    const ch = CHAKRAS[Math.floor(Math.random() * 7)];
+                    ow.orbs[i] = {
+                        x: (Math.random() - 0.5) * 3600,
+                        y: (Math.random() - 0.5) * 3600,
+                        chakra: ch,
+                        phase: Math.random() * Math.PI * 2
+                    };
+                }
+            }
+
+            // Check 7 Sacred Shrines Cleansing & Bonus
+            CHAKRAS.forEach(ch => {
+                const sd = Math.hypot(ow.x - ch.shrineX, ow.y - ch.shrineY);
+                if (sd < 72 && ow.karmaStars > 0) {
+                    ow.karmaStars = 0;
+                    updateKarmaHUD();
+                    sfx.playChakraTone(ch.id - 1);
+                    showAnnouncement(`🕉️ ${ch.name.toUpperCase()} SANCTUARY`, 'Karmic Alert Cleansed to 0 Eyes!', ch.color);
+                }
+            });
+
+            // Check Central 3D Runner Portal Entry
+            if (Math.hypot(ow.x - ow.portal.x, ow.y - ow.portal.y) < 58 && ow.zJump > 10) {
+                switchActiveGameplayMode('runner');
+                return;
+            }
+
+            // Update Roaming Karmic Shadow Stalkers
+            ow.stalkers.forEach(st => {
+                if (st.stunTimer > 0) {
+                    st.stunTimer = Math.max(0, st.stunTimer - dt);
+                    return;
+                }
+                const distToPlayer = Math.hypot(ow.x - st.x, ow.y - st.y);
+                const chaseRange = 420 + ow.karmaStars * 220;
+                const stalkerSpd = 125 + ow.karmaStars * 38;
+
+                if (distToPlayer < chaseRange) {
+                    st.angle = Math.atan2(ow.y - st.y, ow.x - st.x);
+                } else {
+                    st.angle += (Math.random() - 0.5) * dt * 1.5;
+                }
+                st.x += Math.cos(st.angle) * stalkerSpd * dt;
+                st.y += Math.sin(st.angle) * stalkerSpd * dt;
+
+                // Collision with Player
+                if (distToPlayer < 36 && ow.zJump < 20) {
+                    if (game.HigherSelfTimer > 0 || ow.boostTimer > 0) {
+                        st.stunTimer = 6.0;
+                        game.score += 50;
+                        createBurstParticles(canvas.width / 2, canvas.height / 2, '#e879f9', 24);
+                        sfx.playChakraTone(6);
+                    } else if (game.player.shieldActive) {
+                        game.player.shieldActive = false;
+                        st.stunTimer = 5.0;
+                        updateChakraHUD();
+                        showAnnouncement('🛡️ WATER AEGIS ABSORBED SHADOW STALKER!', 'Collect Sacral/Throat Chakra to recharge', '#22d3ee');
+                    } else {
+                        st.stunTimer = 3.5;
+                        ow.karmaStars = Math.min(5, ow.karmaStars + 1);
+                        updateKarmaHUD();
+                        sfx.playCrash();
+                        createBurstParticles(canvas.width / 2, canvas.height / 2, '#ef4444', 25);
+                        showAnnouncement(`👁️ KARMIC ALERT LEVEL ${ow.karmaStars}/5`, 'Visit any Chakra Shrine or press E to cleanse!', '#f43f5e');
+                    }
+                }
+            });
+
+            // Update District Name & Serpent Segments HUD
+            const distInfo = getDistrictAt(ow.x, ow.y);
+            document.getElementById('hudBiomeName').textContent = distInfo.name;
+            document.getElementById('hudSerpentLength').textContent = `Segments: ${ow.serpentLength}`;
+            document.getElementById('hudScore').textContent = Math.floor(game.score).toLocaleString();
+            document.getElementById('hudDistance').textContent = `${Math.floor(game.distance)}m`;
+
+            // Telemetry Sampling
+            game.telemetryTimer += dt;
+            if (game.telemetryTimer >= 0.35) {
+                game.telemetryTimer = 0;
+                game.telemetrySamples.push({
+                    t: Number(game.runElapsed.toFixed(1)),
+                    score: Math.round(game.score),
+                    speed: Math.max(26, scaledVel),
+                    higherSelf: game.HigherSelfTimer > 0
+                });
+                if (game.telemetrySamples.length > 140) game.telemetrySamples.shift();
+                document.getElementById('hudVelocityVal').textContent = `${scaledVel.toFixed(0)}m/s`;
+                renderLiveHudMiniGraphs();
+            }
+        }
+
+        function collectOpenWorldChakra(orb) {
+            const ch = orb.chakra;
+            let pts = ch.points;
+            if (selectedCharKey === 'serpent') pts = Math.round(pts * 1.25);
+            if (selectedCharKey === 'explorer' && (ch.id === 1 || ch.id === 3)) pts *= 2;
+            if (selectedCharKey === 'mystic' && (ch.id === 2 || ch.id === 5)) game.player.shieldActive = true;
+            if (game.HigherSelfTimer > 0) pts *= 2;
+
+            game.score += pts;
+            game.totalChakrasCollected++;
+            game.chakraCounts[ch.id] = (game.chakraCounts[ch.id] || 0) + 1;
+            game.auraColor = ch.color;
+
+            // Grow Kundalini Serpent length!
+            game.ow.serpentLength = Math.min(65, game.ow.serpentLength + 2);
+
+            // Play the Chakra's unique musical instrument!
+            sfx.playChakraTone(ch.id - 1);
+            createBurstParticles(canvas.width / 2, canvas.height / 2, ch.color, 20);
+
+            const wasNew = !game.collectedSet.has(ch.id);
+            game.collectedSet.add(ch.id);
+
+            if (game.collectedSet.size === 7) {
+                game.collectedSet.clear();
+                game.HigherSelfTimer = 9.0;
+                game.ow.karmaStars = 0;
+                updateKarmaHUD();
+                game.score += 500;
+                sfx.playEnlightenment();
+                showAnnouncement('🕉️ ALL 7 CHAKRAS ALIGNED!', '+500 PTS • Higher Self Cosmic Mode & Karma Cleansed', '#e879f9');
+            } else if (wasNew) {
+                showAnnouncement(`${ch.mantra} ${ch.name.toUpperCase()} (${ch.freq}Hz)`, `+${pts} PTS • ${ch.instrument}`, ch.color);
+            }
+
+            updateChakraHUD();
+            renderLiveHudMiniGraphs();
+        }
+
+        /*************************************************************************
+         * 7. RENDER GTA OPEN-WORLD MAP & ROTATING RADAR MINIMAP (v4.0)
+         *************************************************************************/
+        function renderOpenWorldScene() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const ow = game.ow;
+
+            ctx.save();
+            ctx.fillStyle = '#070b14';
+            ctx.fillRect(0, 0, w, h);
+
+            // Center camera on player
+            const camX = w / 2 - ow.x;
+            const camY = h / 2 - ow.y;
+            ctx.translate(camX, camY);
+
+            // 1. Draw 4 Biome Quadrants Ground Terrain
+            // NW: Eldorado Golden Jungle (-2000..0, -2000..0)
+            const nwGrad = ctx.createRadialGradient(-1000, -1000, 100, -1000, -1000, 1400);
+            nwGrad.addColorStop(0, '#422605');
+            nwGrad.addColorStop(1, '#1a1205');
+            ctx.fillStyle = nwGrad;
+            ctx.fillRect(-WORLD_HALF, -WORLD_HALF, WORLD_HALF, WORLD_HALF);
+
+            // SW: Azure Coastal Sanctuary (-2000..0, 0..2000)
+            const swGrad = ctx.createRadialGradient(-1150, 1150, 150, -1000, 1000, 1400);
+            swGrad.addColorStop(0, '#0284c7');
+            swGrad.addColorStop(0.35, '#0369a1');
+            swGrad.addColorStop(0.55, '#ca8a04'); // Sandy beach ring
+            swGrad.addColorStop(1, '#082f49');
+            ctx.fillStyle = swGrad;
+            ctx.fillRect(-WORLD_HALF, 0, WORLD_HALF, WORLD_HALF);
+
+            // SE: Red Dead Sepia Canyon (0..2000, 0..2000)
+            const seGrad = ctx.createRadialGradient(1000, 1000, 100, 1000, 1000, 1400);
+            seGrad.addColorStop(0, '#7c2d12');
+            seGrad.addColorStop(1, '#270e04');
+            ctx.fillStyle = seGrad;
+            ctx.fillRect(0, 0, WORLD_HALF, WORLD_HALF);
+
+            // NE: Cosmic Lotus Citadel (0..2000, -2000..0)
+            const neGrad = ctx.createRadialGradient(1000, -1000, 100, 1000, -1000, 1400);
+            neGrad.addColorStop(0, '#4c1d95');
+            neGrad.addColorStop(1, '#13072e');
+            ctx.fillStyle = neGrad;
+            ctx.fillRect(0, -WORLD_HALF, WORLD_HALF, WORLD_HALF);
+
+            // Subtle Sacred Coordinate Grid Lines
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.045)';
+            ctx.lineWidth = 1;
+            const startGX = Math.floor((ow.x - w) / 160) * 160;
+            const endGX = ow.x + w;
+            const startGY = Math.floor((ow.y - h) / 160) * 160;
+            const endGY = ow.y + h;
+            ctx.beginPath();
+            for (let gx = startGX; gx <= endGX; gx += 160) {
+                ctx.moveTo(gx, startGY); ctx.lineTo(gx, endGY);
+            }
+            for (let gy = startGY; gy <= endGY; gy += 160) {
+                ctx.moveTo(startGX, gy); ctx.lineTo(endGX, gy);
+            }
+            ctx.stroke();
+
+            // 2. Draw Grand Temple Highways, Ring Roads & Golden Bridges
+            ctx.fillStyle = '#1e293b';
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
+            // North-South & East-West Grand Boulevards
+            ctx.fillRect(-WORLD_HALF, -95, WORLD_HALF * 2, 190);
+            ctx.fillRect(-95, -WORLD_HALF, 190, WORLD_HALF * 2);
+
+            // Dashed Gold Center Highway Lines
+            ctx.save();
+            ctx.setLineDash([28, 22]);
+            ctx.strokeStyle = 'rgba(253, 224, 71, 0.55)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(-WORLD_HALF, 0); ctx.lineTo(WORLD_HALF, 0);
+            ctx.moveTo(0, -WORLD_HALF); ctx.lineTo(0, WORLD_HALF);
+            ctx.stroke();
+            ctx.restore();
+
+            // Outer Ring Highway connecting all Shrines
+            ctx.strokeStyle = 'rgba(30, 41, 59, 0.92)';
+            ctx.lineWidth = 110;
+            ctx.beginPath();
+            ctx.arc(0, 0, 1550, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(0, 0, 1550, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Central Temple Nexus Plaza
+            const plazaGrad = ctx.createRadialGradient(0, 0, 20, 0, 0, 360);
+            plazaGrad.addColorStop(0, '#3b0764');
+            plazaGrad.addColorStop(0.7, '#1e1b4b');
+            plazaGrad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = plazaGrad;
+            ctx.beginPath();
+            ctx.arc(0, 0, 360, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // 3. Draw GPS Waypoint Route Line on the Ground
+            if (ow.waypoint && ow.waypoint.active) {
+                ctx.save();
+                ctx.setLineDash([16, 12]);
+                ctx.strokeStyle = '#c084fc';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.moveTo(ow.x, ow.y);
+                ctx.lineTo(ow.waypoint.x, ow.waypoint.y);
+                ctx.stroke();
+
+                // Pulsing Waypoint Target Ring
+                ctx.setLineDash([]);
+                ctx.strokeStyle = '#e879f9';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(ow.waypoint.x, ow.waypoint.y, 35 + Math.sin(game.time * 5) * 8, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 4. Draw 7 Sacred Chakra Shrines Across the Map
+            CHAKRAS.forEach(ch => {
+                ctx.save();
+                ctx.translate(ch.shrineX, ch.shrineY);
+
+                // Glowing Sanctuary Mandala
+                const sg = ctx.createRadialGradient(0, 0, 10, 0, 0, 110);
+                sg.addColorStop(0, ch.color);
+                sg.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = sg;
+                ctx.beginPath();
+                ctx.arc(0, 0, 110, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.strokeStyle = ch.color;
+                ctx.lineWidth = 3.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, 68, 0, Math.PI * 2);
+                ctx.stroke();
+
+                ctx.fillStyle = '#090514';
+                ctx.beginPath();
+                ctx.arc(0, 0, 34, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = ch.color;
+                ctx.font = 'bold 26px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(ch.mantra, 0, 2);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Cinzel, serif';
+                ctx.fillText(`${ch.id}. ${ch.name.toUpperCase()} SHRINE`, 0, -82);
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '10px sans-serif';
+                ctx.fillText(`${ch.freq}Hz • ${ch.instrument}`, 0, 84);
+                ctx.restore();
+            });
+
+            // 5. Draw Central 3D Runner Mode Warp Portal (0,0)
+            ctx.save();
+            ctx.translate(ow.portal.x, ow.portal.y);
+            ctx.rotate(game.time * 1.5);
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-45, -45, 90, 90);
+            ctx.rotate(Math.PI / 4);
+            ctx.strokeStyle = '#e879f9';
+            ctx.strokeRect(-45, -45, 90, 90);
+            ctx.restore();
+            ctx.fillStyle = '#fde047';
+            ctx.font = 'bold 12px Cinzel, serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⛩️ 3D TEMPLE RUN PORTAL (JUMP IN)', 0, -70);
+
+            // 6. Draw Biome Trees, Palms, Cacti & Pillars
+            ow.trees.forEach(tr => {
+                if (Math.abs(tr.x - ow.x) > w * 0.7 || Math.abs(tr.y - ow.y) > h * 0.7) return;
+                ctx.save();
+                ctx.translate(tr.x, tr.y);
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                ctx.beginPath(); ctx.arc(6, 6, tr.radius, 0, Math.PI * 2); ctx.fill();
+
+                if (tr.biome === 'jungle') {
+                    ctx.fillStyle = '#a16207';
+                } else if (tr.biome === 'coast') {
+                    ctx.fillStyle = '#059669';
+                } else if (tr.biome === 'canyon') {
+                    ctx.fillStyle = '#65a30d';
+                } else {
+                    ctx.fillStyle = '#7e22ce';
+                }
+                ctx.strokeStyle = '#fde047';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(0, 0, tr.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            });
+
+            // 7. Draw Collectible Chakra Orbs
+            ow.orbs.forEach(orb => {
+                if (Math.abs(orb.x - ow.x) > w * 0.65 || Math.abs(orb.y - ow.y) > h * 0.65) return;
+                const ch = orb.chakra;
+                const pulse = 18 + Math.sin(game.time * 5 + orb.phase) * 3;
+                ctx.save();
+                ctx.translate(orb.x, orb.y);
+                const rg = ctx.createRadialGradient(0, 0, 3, 0, 0, pulse * 1.6);
+                rg.addColorStop(0, '#ffffff');
+                rg.addColorStop(0.5, ch.color);
+                rg.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = rg;
+                ctx.beginPath(); ctx.arc(0, 0, pulse * 1.6, 0, Math.PI * 2); ctx.fill();
+
+                ctx.fillStyle = '#090514';
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1.8;
+                ctx.beginPath(); ctx.arc(0, 0, 13, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+
+                ctx.fillStyle = ch.color;
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(ch.mantra, 0, 1);
+                ctx.restore();
+            });
+
+            // 8. Draw Rideable Mounts / Chariots in World
+            ow.vehicles.forEach(v => {
+                if (ow.mountedVehicle && ow.mountedVehicle.id === v.id) return;
+                ctx.save();
+                ctx.translate(v.x, v.y);
+                ctx.strokeStyle = v.color;
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(0, 0, 28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.font = '24px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(v.icon, 0, 2);
+                ctx.fillStyle = v.color;
+                ctx.font = 'bold 10px sans-serif';
+                ctx.fillText(`${v.name} [Press F]`, 0, -36);
+                ctx.restore();
+            });
+
+            // 9. Draw Roaming Shadow Stalkers
+            ow.stalkers.forEach(st => {
+                if (Math.abs(st.x - ow.x) > w * 0.7 || Math.abs(st.y - ow.y) > h * 0.7) return;
+                ctx.save();
+                ctx.translate(st.x, st.y);
+                ctx.fillStyle = st.stunTimer > 0 ? 'rgba(56, 189, 248, 0.5)' : 'rgba(225, 29, 72, 0.85)';
+                ctx.strokeStyle = '#fda4af';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(0, 0, 22, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(st.stunTimer > 0 ? '💫' : '👁️', 0, 1);
+                ctx.restore();
+            });
+
+            // 10. Draw Multi-Segment Slithering Kundalini Serpent Body / Chakra Ribbon
+            for (let i = ow.segments.length - 1; i >= 1; i--) {
+                const seg = ow.segments[i];
+                const t = i / ow.segments.length;
+                const chColor = CHAKRAS[i % 7].color;
+                const radius = selectedCharKey === 'serpent'
+                    ? (22 * (1 - t * 0.65))
+                    : (14 * (1 - t * 0.75));
+
+                ctx.save();
+                ctx.translate(seg.x, seg.y);
+                ctx.fillStyle = selectedCharKey === 'serpent' ? '#10b981' : chColor;
+                ctx.globalAlpha = selectedCharKey === 'serpent' ? 0.92 : 0.45;
+                ctx.beginPath();
+                ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (selectedCharKey === 'serpent') {
+                    ctx.strokeStyle = chColor;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // 11. Draw Player Shockwave Pulse Ring
+            if (ow.pulseWaveRadius > 0) {
+                ctx.strokeStyle = '#e879f9';
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.arc(ow.x, ow.y, ow.pulseWaveRadius, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // 12. Draw Player Avatar Head / Mounted Chariot at (ow.x, ow.y)
+            const jumpScale = 1 + (ow.zJump / 140);
+            ctx.save();
+            ctx.translate(ow.x, ow.y - ow.zJump * 0.6);
+            ctx.scale(jumpScale, jumpScale);
+
+            if (ow.mountedVehicle) {
+                ctx.strokeStyle = ow.mountedVehicle.color;
+                ctx.lineWidth = 5;
+                ctx.beginPath();
+                ctx.arc(0, 0, 40, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            const img = loadedImages[selectedCharKey];
+            const r = 30;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.save();
+            ctx.clip();
+            if (img && img.complete && img.naturalWidth > 0) {
+                const m = Math.min(img.naturalWidth, img.naturalHeight);
+                ctx.drawImage(img, (img.naturalWidth - m) / 2, 0, m, m, -r, -r, r * 2, r * 2);
+            } else {
+                ctx.fillStyle = CHARACTERS[selectedCharKey].primaryColor;
+                ctx.fillRect(-r, -r, r * 2, r * 2);
+            }
+            ctx.restore();
+
+            ctx.strokeStyle = game.HigherSelfTimer > 0 ? '#e879f9' : CHARACTERS[selectedCharKey].primaryColor;
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(0, 0, r, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Directional Heading Pointer
+            ctx.rotate(ow.angle);
+            ctx.fillStyle = '#fde047';
+            ctx.beginPath();
+            ctx.moveTo(r + 12, 0);
+            ctx.lineTo(r - 2, -8);
+            ctx.lineTo(r - 2, 8);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+            ctx.restore();
+
+            // Draw Screen-Space Burst Particles
+            drawParticles();
+
+            // Update GTA Radar Minimap
+            renderGTAMinimap();
+        }
+
+        function renderGTAMinimap() {
+            const c = document.getElementById('gtaMinimapCanvas');
+            if (!c) return;
+            const g = c.getContext('2d');
+            const w = c.width;
+            const h = c.height;
+            const ow = game.ow;
+            const radarRange = 1750;
+            const scale = (w / 2) / radarRange;
+
+            g.clearRect(0, 0, w, h);
+            g.save();
+            g.translate(w / 2, h / 2);
+
+            // Quadrants background tint
+            g.fillStyle = 'rgba(66, 38, 5, 0.55)';
+            g.fillRect((-WORLD_HALF - ow.x) * scale, (-WORLD_HALF - ow.y) * scale, WORLD_HALF * scale, WORLD_HALF * scale);
+            g.fillStyle = 'rgba(2, 132, 199, 0.55)';
+            g.fillRect((-WORLD_HALF - ow.x) * scale, (0 - ow.y) * scale, WORLD_HALF * scale, WORLD_HALF * scale);
+            g.fillStyle = 'rgba(124, 45, 18, 0.55)';
+            g.fillRect((0 - ow.x) * scale, (0 - ow.y) * scale, WORLD_HALF * scale, WORLD_HALF * scale);
+            g.fillStyle = 'rgba(76, 29, 149, 0.55)';
+            g.fillRect((0 - ow.x) * scale, (-WORLD_HALF - ow.y) * scale, WORLD_HALF * scale, WORLD_HALF * scale);
+
+            // Roads on Radar
+            g.fillStyle = '#475569';
+            g.fillRect((-WORLD_HALF - ow.x) * scale, (-95 - ow.y) * scale, WORLD_HALF * 2 * scale, 190 * scale);
+            g.fillRect((-95 - ow.x) * scale, (-WORLD_HALF - ow.y) * scale, 190 * scale, WORLD_HALF * 2 * scale);
+
+            // GPS Route Line on GTA Radar
+            if (ow.waypoint && ow.waypoint.active) {
+                g.strokeStyle = '#d946ef';
+                g.lineWidth = 2.5;
+                g.beginPath();
+                g.moveTo(0, 0);
+                g.lineTo((ow.waypoint.x - ow.x) * scale, (ow.waypoint.y - ow.y) * scale);
+                g.stroke();
+            }
+
+            // 7 Chakra Shrine Blips on Radar
+            CHAKRAS.forEach(ch => {
+                const bx = (ch.shrineX - ow.x) * scale;
+                const by = (ch.shrineY - ow.y) * scale;
+                g.fillStyle = ch.color;
+                g.strokeStyle = '#ffffff';
+                g.lineWidth = 1;
+                g.beginPath();
+                g.arc(bx, by, 4.5, 0, Math.PI * 2);
+                g.fill();
+                g.stroke();
+            });
+
+            // Shadow Stalker Red Blips
+            ow.stalkers.forEach(st => {
+                const sx = (st.x - ow.x) * scale;
+                const sy = (st.y - ow.y) * scale;
+                g.fillStyle = '#f43f5e';
+                g.beginPath();
+                g.arc(sx, sy, 2.5, 0, Math.PI * 2);
+                g.fill();
+            });
+
+            // Player White/Gold Directional Arrow in Center of GTA Radar
+            g.rotate(ow.angle);
+            g.fillStyle = '#fde047';
+            g.strokeStyle = '#000000';
+            g.lineWidth = 1.5;
+            g.beginPath();
+            g.moveTo(7, 0);
+            g.lineTo(-5, -5);
+            g.lineTo(-3, 0);
+            g.lineTo(-5, 5);
+            g.closePath();
+            g.fill();
+            g.stroke();
+
+            g.restore();
+        }
+
+        /*************************************************************************
+         * 8. CLASSIC 3D TEMPLE RUNNER MODE ENGINE (PRESERVED & ENHANCED)
+         *************************************************************************/
+        const PLAYER_Z = 10;
+        const HORIZON_Z = 115;
+
+        function project3D(laneX, heightY, z) {
+            const w = canvas.width;
+            const h = canvas.height;
+            const horizonY = h * 0.36;
+            const groundBottomY = h * 0.93;
+            const focalLength = 22;
+            const safeZ = Math.max(1, z);
+            const scale = focalLength / (focalLength + safeZ - PLAYER_Z);
+            const baseRoadHalfWidth = Math.min(w * 0.43, 355);
+            const screenX = (w * 0.5) + (laneX * baseRoadHalfWidth * 0.66 * scale);
+            const screenGroundY = horizonY + (groundBottomY - horizonY) * scale;
+            const screenY = screenGroundY - (heightY * scale * (h * 0.0018));
+            return { x: screenX, y: screenY, groundY: screenGroundY, scale };
+        }
+
+        function switchActiveGameplayMode(targetMode) {
+            activeGameMode = targetMode;
+            game.mode = targetMode;
+
+            const modeBadge = document.getElementById('hudModeBadge');
+            const radarBox = document.getElementById('gtaRadarContainer');
+            const joyEl = document.getElementById('virtualJoystickZone');
+            const laneBtns = document.getElementById('runnerLaneButtons');
+
+            if (targetMode === 'openworld') {
+                modeBadge.textContent = '🗺️ GTA OPEN WORLD';
+                modeBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-black uppercase';
+                radarBox.classList.remove('hidden');
+                joyEl.classList.remove('hidden');
+                laneBtns.classList.add('hidden');
+                laneBtns.classList.remove('flex');
+                showAnnouncement('🗺️ GTA OPEN-WORLD SANDBOX', 'Explore 4 Biomes, 7 Shrines & Rideable Mounts!', '#10b981');
+            } else {
+                modeBadge.textContent = '🏛️ 3D TEMPLE RUNNER';
+                modeBadge.className = 'text-[10px] px-2 py-0.5 rounded-md bg-purple-500/20 border border-purple-400/50 text-purple-300 font-black uppercase';
+                radarBox.classList.add('hidden');
+                joyEl.classList.add('hidden');
+                laneBtns.classList.remove('hidden');
+                laneBtns.classList.add('flex');
+                showAnnouncement('🏛️ 3D TEMPLE RUNNER HIGHWAY', 'Swipe or Arrow Keys to Dodge Obstacles!', '#c084fc');
+            }
+        }
+
+        function startGame() {
+            const charConfig = CHARACTERS[selectedCharKey];
+            game.running = true;
+            game.mode = activeGameMode;
+            game.score = 0;
+            game.distance = 0;
+            game.speed = game.baseSpeed;
+            game.peakSpeed = game.baseSpeed;
+            game.runElapsed = 0;
+            game.HigherSelfTimer = 0;
+            game.auraColor = charConfig.primaryColor;
+            game.collectedSet.clear();
+            game.totalChakrasCollected = 0;
+            Object.keys(game.chakraCounts).forEach(k => game.chakraCounts[k] = 0);
+            game.telemetrySamples = [{ t: 0, score: 0, speed: game.baseSpeed, higherSelf: false }];
+            game.telemetryTimer = 0;
+
+            game.player.lane = 0;
+            game.player.currentX = 0;
+            game.player.y = 0;
+            game.player.vy = 0;
+            game.player.isJumping = false;
+            game.player.slideTimer = 0;
+            game.player.shieldActive = (selectedCharKey === 'mystic');
+
+            game.entities = [];
+            game.particles = [];
+            game.pillars = [];
+            for (let z = 14; z <= HORIZON_Z; z += 15) {
+                game.pillars.push({ z, runeIndex: Math.floor(Math.random() * 7) });
+            }
+            for (let z = 35; z <= 95; z += 18) {
+                spawnChakraOrb(0, z);
+            }
+
+            initOpenWorldSandbox();
+            switchActiveGameplayMode(activeGameMode);
+            updateChakraHUD();
+            updateKarmaHUD();
+            renderLiveHudMiniGraphs();
+
+            document.getElementById('menuModal').classList.add('hidden');
+            document.getElementById('gameOverModal').classList.add('hidden');
+            document.getElementById('analyticsModal').classList.add('hidden');
+            document.getElementById('hudLayer').classList.remove('hidden');
+        }
+
+        function spawnChakraOrb(lane, z) {
+            const ch = CHAKRAS[Math.floor(Math.random() * CHAKRAS.length)];
+            game.entities.push({
+                type: 'chakra', lane, z, y: 28, chakra: ch, spinOffset: Math.random() * Math.PI * 2
+            });
+        }
+
+        function spawnWave() {
+            const lanes = [-1, 0, 1];
+            const shuffled = lanes.slice().sort(() => Math.random() - 0.5);
+            const r = Math.random();
+            const subtype = r < 0.35 ? 'high_arch' : (r < 0.68 ? 'stone_pillar' : 'low_hurdle');
+            game.entities.push({ type: 'obstacle', subtype, lane: shuffled[0], z: HORIZON_Z });
+            spawnChakraOrb(shuffled[1], HORIZON_Z);
+        }
+
+        function moveLane(dir) {
+            if (!game.running) return;
+            game.player.lane = Math.max(-1, Math.min(1, game.player.lane + dir));
+        }
+
+        function triggerJump() {
+            if (!game.running) return;
+            if (game.mode === 'openworld') {
+                if (game.ow.zJump <= 0) {
+                    game.ow.vzJump = 260;
+                    sfx.playJump();
+                }
+                return;
+            }
+            if (!game.player.isJumping) {
+                game.player.isJumping = true;
+                game.player.slideTimer = 0;
+                game.player.vy = 258 * CHARACTERS[selectedCharKey].jumpBoost;
+                sfx.playJump();
+            }
+        }
+
+        function triggerSlide() {
+            if (!game.running) return;
+            if (game.mode === 'openworld') {
+                game.ow.boostTimer = 1.6;
+                sfx.playSlide();
+                return;
+            }
+            if (game.player.isJumping) game.player.vy = -350;
+            game.player.slideTimer = 0.62;
+            sfx.playSlide();
+        }
+
+        document.getElementById('btnTouchLeft').addEventListener('click', () => moveLane(-1));
+        document.getElementById('btnTouchRight').addEventListener('click', () => moveLane(1));
+        document.getElementById('btnTouchJump').addEventListener('click', triggerJump);
+        document.getElementById('btnTouchSlide').addEventListener('click', triggerSlide);
+
+        function createBurstParticles(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 65 + Math.random() * 200;
+                game.particles.push({
+                    x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - 45,
+                    size: 2.5 + Math.random() * 5, color, alpha: 1, life: 0.45 + Math.random() * 0.4
+                });
+            }
+        }
+
+        function updateRunnerMode(dt) {
+            const charCfg = CHARACTERS[selectedCharKey];
+            const speedMultiplier = game.HigherSelfTimer > 0 ? 1.32 : 1.0;
+            game.speed = Math.min(game.maxSpeed, game.baseSpeed + (game.distance * 0.026)) * speedMultiplier;
+            if (game.speed > game.peakSpeed) game.peakSpeed = game.speed;
+
+            const stepZ = game.speed * dt;
+            game.distance += stepZ * 0.35;
+            game.score += stepZ * 0.25;
+
+            if (game.HigherSelfTimer > 0) {
+                game.HigherSelfTimer = Math.max(0, game.HigherSelfTimer - dt);
+                if (game.HigherSelfTimer === 0) updateChakraHUD();
+            }
+
+            const diffX = game.player.lane - game.player.currentX;
+            game.player.currentX += diffX * Math.min(1, dt * charCfg.laneSpeed);
+
+            if (game.player.isJumping) {
+                game.player.y += game.player.vy * dt;
+                game.player.vy -= 630 * dt;
+                if (game.player.y <= 0) {
+                    game.player.y = 0; game.player.vy = 0; game.player.isJumping = false;
+                }
+            }
+            if (game.player.slideTimer > 0) game.player.slideTimer = Math.max(0, game.player.slideTimer - dt);
+            game.player.bobPhase += dt * (game.speed * 0.46);
+
+            game.pillars.forEach(p => {
+                p.z -= stepZ;
+                if (p.z < 2) { p.z += HORIZON_Z; p.runeIndex = Math.floor(Math.random() * 7); }
+            });
+
+            game.spawnTimer -= stepZ;
+            if (game.spawnTimer <= 0) {
+                spawnWave();
+                game.spawnTimer = 25 + Math.random() * 10;
+            }
+
+            for (let i = game.entities.length - 1; i >= 0; i--) {
+                const ent = game.entities[i];
+                ent.z -= stepZ;
+
+                if (ent.type === 'chakra' && ent.z < 35 && ent.z > PLAYER_Z - 2) {
+                    if (Math.abs(ent.lane - game.player.currentX) <= charCfg.magnetRadius) {
+                        ent.lane += (game.player.currentX - ent.lane) * dt * 9.5;
+                    }
+                }
+
+                if (Math.abs(ent.z - PLAYER_Z) < 3.4) {
+                    const laneDist = Math.abs(ent.lane - game.player.currentX);
+                    if (ent.type === 'chakra' && laneDist < 0.56) {
+                        collectOpenWorldChakra(ent);
+                        game.entities.splice(i, 1);
+                        continue;
+                    } else if (ent.type === 'obstacle' && !ent.passed && laneDist < 0.42) {
+                        let hit = false;
+                        if (ent.subtype === 'low_hurdle' && game.player.y < 38) hit = true;
+                        else if (ent.subtype === 'high_arch' && game.player.slideTimer <= 0) hit = true;
+                        else if (ent.subtype === 'stone_pillar' && selectedCharKey !== 'phoenix') hit = true;
+
+                        if (hit) {
+                            ent.passed = true;
+                            if (game.HigherSelfTimer > 0 || game.player.shieldActive) {
+                                game.player.shieldActive = false;
+                                updateChakraHUD();
+                                game.entities.splice(i, 1);
+                                continue;
+                            } else {
+                                triggerGameOver(ent.subtype);
+                                return;
+                            }
+                        }
+                    }
+                }
+                if (ent.z < 1) game.entities.splice(i, 1);
+            }
+
+            document.getElementById('hudScore').textContent = Math.floor(game.score).toLocaleString();
+            document.getElementById('hudDistance').textContent = `${Math.floor(game.distance)}m`;
+        }
+
+        function renderRunnerScene() {
+            const w = canvas.width;
+            const h = canvas.height;
+            const horizonY = h * 0.36;
+            const charCfg = CHARACTERS[selectedCharKey] || CHARACTERS.serpent;
+
+            // 1. Sky Gradient & Volumetric God-Rays
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+            skyGrad.addColorStop(0, charCfg.skyTop);
+            skyGrad.addColorStop(0.55, charCfg.skyMid);
+            skyGrad.addColorStop(1, charCfg.skyHorizon);
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, w, horizonY);
+
+            // Twinkling Astral Stars
+            game.stars.forEach(st => {
+                const alpha = 0.3 + 0.7 * Math.abs(Math.sin(game.time * st.twinkleSpeed + st.phase));
+                ctx.fillStyle = `rgba(255, 255, 255, ${alpha.toFixed(2)})`;
+                ctx.beginPath();
+                ctx.arc(st.xFrac * w, st.yFrac * h, st.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Volumetric Sun / Horizon God-Rays
+            ctx.save();
+            const sunGrad = ctx.createRadialGradient(w * 0.5, horizonY, 10, w * 0.5, horizonY, w * 0.45);
+            sunGrad.addColorStop(0, 'rgba(253, 224, 71, 0.42)');
+            sunGrad.addColorStop(0.45, 'rgba(245, 158, 11, 0.14)');
+            sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = sunGrad;
+            ctx.fillRect(0, 0, w, horizonY + 80);
+            ctx.restore();
+
+            // 2. Ground & 3-Lane Perspective Highway
+            const groundGrad = ctx.createLinearGradient(0, horizonY, 0, h);
+            groundGrad.addColorStop(0, charCfg.roadFar);
+            groundGrad.addColorStop(1, '#030207');
+            ctx.fillStyle = groundGrad;
+            ctx.fillRect(0, horizonY, w, h - horizonY);
+
+            const leftNear = project3D(-1.58, 0, 2);
+            const rightNear = project3D(1.58, 0, 2);
+            const leftFar = project3D(-1.58, 0, HORIZON_Z);
+            const rightFar = project3D(1.58, 0, HORIZON_Z);
+
+            ctx.fillStyle = charCfg.roadNear;
+            ctx.beginPath();
+            ctx.moveTo(leftFar.x, leftFar.groundY);
+            ctx.lineTo(rightFar.x, rightFar.groundY);
+            ctx.lineTo(rightNear.x, rightNear.groundY);
+            ctx.lineTo(leftNear.x, leftNear.groundY);
+            ctx.closePath();
+            ctx.fill();
+
+            // Glowing Lane Divider Lines
+            [-0.52, 0.52].forEach(divLane => {
+                const dn = project3D(divLane, 0, 2);
+                const df = project3D(divLane, 0, HORIZON_Z);
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.32)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(df.x, df.groundY);
+                ctx.lineTo(dn.x, dn.groundY);
+                ctx.stroke();
+            });
+
+            // 3. Draw Temple Pillars with Chakra Flame Braziers
+            const sortedPillars = game.pillars.slice().sort((a, b) => b.z - a.z);
+            sortedPillars.forEach(p => {
+                [-1.85, 1.85].forEach(sideLane => {
+                    const proj = project3D(sideLane, 0, p.z);
+                    const pw = Math.max(4, 38 * proj.scale);
+                    const ph = Math.max(12, 220 * proj.scale);
+                    ctx.fillStyle = charCfg.pillarColor;
+                    ctx.strokeStyle = 'rgba(251, 191, 36, 0.4)';
+                    ctx.lineWidth = 1;
+                    drawRoundRect(ctx, proj.x - pw / 2, proj.groundY - ph, pw, ph, 4 * proj.scale);
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Brazier Flame on Top
+                    const flameCh = CHAKRAS[p.runeIndex % 7];
+                    ctx.fillStyle = flameCh.color;
+                    ctx.beginPath();
+                    ctx.arc(proj.x, proj.groundY - ph - 6 * proj.scale, Math.max(2, 10 * proj.scale), 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            });
+
+            // 4. Draw Entities (Obstacles & Chakra Orbs)
+            const sorted = game.entities.slice().sort((a, b) => b.z - a.z);
+            sorted.forEach(ent => {
+                const proj = project3D(ent.lane, ent.y || 0, ent.z);
+                const s = proj.scale;
+                if (ent.type === 'chakra') {
+                    const r = Math.max(6, 32 * s);
+                    ctx.fillStyle = ent.chakra.color;
+                    ctx.beginPath();
+                    ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = Math.max(1, 2 * s);
+                    ctx.stroke();
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = `bold ${Math.max(8, Math.round(r * 0.7))}px sans-serif`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(ent.chakra.mantra, proj.x, proj.y);
+                } else {
+                    const ow = 110 * s;
+                    const oh = ent.subtype === 'stone_pillar' ? 145 * s : 58 * s;
+                    const oy = ent.subtype === 'high_arch' ? proj.groundY - 125 * s : proj.groundY - oh;
+                    ctx.fillStyle = '#991b1b';
+                    ctx.strokeStyle = '#fde047';
+                    ctx.lineWidth = Math.max(1, 2.5 * s);
+                    drawRoundRect(ctx, proj.x - ow / 2, oy, ow, oh, 8 * s);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            });
+
+            // 5. Draw Runner Avatar (with multi-segment slither tail if Kundalini Serpent!)
+            const pProj = project3D(game.player.currentX, game.player.y, PLAYER_Z);
+            if (selectedCharKey === 'serpent') {
+                for (let s = 8; s >= 1; s--) {
+                    const sx = pProj.x + Math.sin(game.time * 11 + s * 0.65) * (s * 6);
+                    const sy = pProj.y + s * 8;
+                    ctx.fillStyle = CHAKRAS[s % 7].color;
+                    ctx.beginPath();
+                    ctx.arc(sx, sy, Math.max(8, 30 - s * 2.4), 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+
+            const img = loadedImages[selectedCharKey];
+            const avatarRadius = game.player.slideTimer > 0 ? 30 : 42;
+            ctx.save();
+            ctx.translate(pProj.x, pProj.y - avatarRadius);
+            if (game.player.shieldActive || game.HigherSelfTimer > 0) {
+                ctx.strokeStyle = game.HigherSelfTimer > 0 ? '#e879f9' : '#22d3ee';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(0, 0, avatarRadius + 8, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(0, 0, avatarRadius, 0, Math.PI * 2);
+            ctx.clip();
+            if (img && img.complete && img.naturalWidth > 0) {
+                const m = Math.min(img.naturalWidth, img.naturalHeight);
+                ctx.drawImage(img, (img.naturalWidth - m) / 2, 0, m, m, -avatarRadius, -avatarRadius, avatarRadius * 2, avatarRadius * 2);
+            } else {
+                ctx.fillStyle = charCfg.primaryColor;
+                ctx.fillRect(-avatarRadius, -avatarRadius, avatarRadius * 2, avatarRadius * 2);
+            }
+            ctx.restore();
+            drawParticles();
+        }
+
+        function drawParticles() {
+            game.particles.forEach(p => {
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        function triggerGameOver(reason) {
+            game.running = false;
+            sfx.playCrash();
+            const finalScore = Math.floor(game.score);
+            if (finalScore > highScore) {
+                highScore = finalScore;
+                safeStorageSet('chakra_run_highscore', String(highScore));
+            }
+            const metrics = computeChakraHarmonyMetrics();
+            document.getElementById('finalScoreVal').textContent = finalScore.toLocaleString();
+            document.getElementById('finalDistanceVal').textContent = `${Math.floor(game.distance)}m`;
+            document.getElementById('finalChakrasVal').textContent = game.totalChakrasCollected;
+            document.getElementById('finalHarmonyVal').textContent = `${metrics.harmonyPct}%`;
+            document.getElementById('hudLayer').classList.add('hidden');
+            document.getElementById('gameOverModal').classList.remove('hidden');
+        }
+
+        /*************************************************************************
+         * 9. TELEMETRY GRAPHS, SOUNDBOARD & UI WIRING
+         *************************************************************************/
+        function computeChakraHarmonyMetrics() {
+            const counts = CHAKRAS.map(c => game.chakraCounts[c.id] || 0);
+            const total = counts.reduce((a, b) => a + b, 0);
+            let weightedEnergy = 0;
+            CHAKRAS.forEach(c => { weightedEnergy += (game.chakraCounts[c.id] || 0) * c.points; });
+            if (total === 0) return { harmonyPct: 100, balanceScore: 0, dominant: CHAKRAS[6] };
+
+            const mean = total / 7;
+            const variance = counts.reduce((acc, v) => acc + Math.pow(v - mean, 2), 0) / 7;
+            const cv = mean > 0 ? Math.min(1.5, Math.sqrt(variance) / (mean + 0.5)) : 0;
+            const harmonyPct = Math.round(Math.max(35, Math.min(100, (1 - cv * 0.55) * 100)));
+            const balanceScore = Math.round(weightedEnergy * (1 + harmonyPct / 100));
+            let maxIdx = 0;
+            counts.forEach((v, i) => { if (v >= counts[maxIdx]) maxIdx = i; });
+            return { harmonyPct, balanceScore, dominant: CHAKRAS[maxIdx] };
+        }
+
+        function renderLiveHudMiniGraphs() {
+            const sparkCanvas = document.getElementById('hudSparklineCanvas');
+            const eqCanvas = document.getElementById('hudEqualizerCanvas');
+            if (!sparkCanvas || !eqCanvas) return;
+
+            const sCtx = sparkCanvas.getContext('2d');
+            const w = sparkCanvas.width, h = sparkCanvas.height;
+            sCtx.clearRect(0, 0, w, h);
+            const samples = game.telemetrySamples.slice(-24);
+            if (samples.length > 1) {
+                const maxSpd = Math.max(65, ...samples.map(s => s.speed));
+                sCtx.beginPath();
+                samples.forEach((pt, idx) => {
+                    const px = (idx / (samples.length - 1)) * w;
+                    const py = h - ((pt.speed - 20) / (maxSpd - 15)) * (h - 6) - 3;
+                    if (idx === 0) sCtx.moveTo(px, py);
+                    else sCtx.lineTo(px, py);
+                });
+                sCtx.strokeStyle = '#fbbf24';
+                sCtx.lineWidth = 2;
+                sCtx.stroke();
+            }
+
+            const eCtx = eqCanvas.getContext('2d');
+            const ew = eqCanvas.width, eh = eqCanvas.height;
+            eCtx.clearRect(0, 0, ew, eh);
+            const maxCount = Math.max(3, ...CHAKRAS.map(c => game.chakraCounts[c.id] || 0));
+            const barW = (ew - 8) / 7;
+            CHAKRAS.forEach((ch, idx) => {
+                const val = game.chakraCounts[ch.id] || 0;
+                const bh = Math.max(3, (val / maxCount) * (eh - 5));
+                eCtx.fillStyle = ch.color;
+                eCtx.fillRect(3 + idx * barW, eh - bh - 2, barW - 1.5, bh);
+            });
+        }
+
+        function drawSpiderRadarChart(targetCanvasId) {
+            const c = document.getElementById(targetCanvasId);
+            if (!c) return;
+            const g = c.getContext('2d');
+            const w = c.width, h = c.height;
+            g.clearRect(0, 0, w, h);
+            const cx = w * 0.5, cy = h * 0.52, maxR = Math.min(w, h) * 0.35;
+
+            [0.25, 0.5, 0.75, 1.0].forEach(rFrac => {
+                const r = maxR * rFrac;
+                g.beginPath();
+                for (let i = 0; i < 7; i++) {
+                    const a = (i * 2 * Math.PI / 7) - Math.PI / 2;
+                    if (i === 0) g.moveTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+                    else g.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+                }
+                g.closePath();
+                g.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+                g.stroke();
+            });
+
+            const counts = CHAKRAS.map(ch => game.chakraCounts[ch.id] || 0);
+            const maxVal = Math.max(4, ...counts);
+
+            g.beginPath();
+            CHAKRAS.forEach((ch, i) => {
+                const a = (i * 2 * Math.PI / 7) - Math.PI / 2;
+                const norm = Math.max(0.18, counts[i] / maxVal);
+                const px = cx + Math.cos(a) * (maxR * norm);
+                const py = cy + Math.sin(a) * (maxR * norm);
+                if (i === 0) g.moveTo(px, py);
+                else g.lineTo(px, py);
+
+                g.fillStyle = ch.color;
+                g.font = 'bold 10px sans-serif';
+                g.textAlign = 'center';
+                g.fillText(`${ch.short} (${counts[i]})`, cx + Math.cos(a) * (maxR + 22), cy + Math.sin(a) * (maxR + 16));
+            });
+            g.closePath();
+            g.fillStyle = 'rgba(251, 191, 36, 0.32)';
+            g.fill();
+            g.strokeStyle = '#fde047';
+            g.lineWidth = 2;
+            g.stroke();
+        }
+
+        function drawTimelineAreaGraph(targetCanvasId) {
+            const c = document.getElementById(targetCanvasId);
+            if (!c) return;
+            const g = c.getContext('2d');
+            const w = c.width, h = c.height;
+            g.clearRect(0, 0, w, h);
+            const samples = game.telemetrySamples.length > 1 ? game.telemetrySamples : [
+                { t: 0, score: 0, speed: 32 }, { t: 10, score: 420, speed: 48 }, { t: 20, score: 980, speed: 54 }
+            ];
+            const maxScore = Math.max(100, ...samples.map(s => s.score));
+            g.beginPath();
+            samples.forEach((s, idx) => {
+                const px = 30 + (idx / (samples.length - 1)) * (w - 45);
+                const py = h - 22 - (s.score / maxScore) * (h - 38);
+                if (idx === 0) g.moveTo(px, py);
+                else g.lineTo(px, py);
+            });
+            g.strokeStyle = '#fbbf24';
+            g.lineWidth = 2.5;
+            g.stroke();
+        }
+
+        function drawChakraSpectrumBarChart(targetCanvasId) {
+            const c = document.getElementById(targetCanvasId);
+            if (!c) return;
+            const g = c.getContext('2d');
+            const w = c.width, h = c.height;
+            g.clearRect(0, 0, w, h);
+            const energies = CHAKRAS.map(ch => (game.chakraCounts[ch.id] || 0) * ch.points);
+            const maxE = Math.max(100, ...energies);
+            const colW = (w - 30) / 7;
+            CHAKRAS.forEach((ch, idx) => {
+                const val = energies[idx];
+                const bh = Math.max(4, (val / maxE) * (h - 36));
+                const bx = 18 + idx * colW + colW * 0.15;
+                g.fillStyle = ch.color;
+                g.fillRect(bx, h - 22 - bh, colW * 0.7, bh);
+                g.font = 'bold 9px sans-serif';
+                g.textAlign = 'center';
+                g.fillText(`${ch.short}`, bx + colW * 0.35, h - 7);
+            });
+        }
+
+        function refreshFullAnalyticsDashboard() {
+            const metrics = computeChakraHarmonyMetrics();
+            document.getElementById('statBalanceScore').textContent = metrics.balanceScore.toLocaleString();
+            document.getElementById('statHarmonyPct').textContent = `Harmony Index: ${metrics.harmonyPct}%`;
+            document.getElementById('statDominantChakra').textContent = `${metrics.dominant.short} (${metrics.dominant.name})`;
+            document.getElementById('statDominantSub').textContent = `${metrics.dominant.freq}Hz • ${metrics.dominant.instrument}`;
+            document.getElementById('statPeakVelocity').textContent = `${game.peakSpeed.toFixed(1)} m/s`;
+            document.getElementById('statTotalDist').textContent = `Travel Distance: ${Math.floor(game.distance)}m`;
+            document.getElementById('statTotalRuns').textContent = `${game.ow.serpentLength} Segments`;
+            document.getElementById('statAllTimeBest').textContent = `All-Time Best: ${highScore.toLocaleString()}`;
+
+            drawSpiderRadarChart('radarGraphCanvas');
+            drawTimelineAreaGraph('timelineGraphCanvas');
+            drawChakraSpectrumBarChart('barGraphCanvas');
+        }
+
+        function initUIElements() {
+            // Top HUD 7 Chakra Slots (Clickable to play instrument!)
+            const slotsContainer = document.getElementById('chakraSlotsContainer');
+            slotsContainer.innerHTML = '';
+            CHAKRAS.forEach((ch, idx) => {
+                const slot = document.createElement('button');
+                slot.id = `hudChakraSlot_${ch.id}`;
+                slot.className = 'btn-action w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center text-[11px] font-bold border transition-all duration-300 opacity-40';
+                slot.style.backgroundColor = '#0f172a';
+                slot.style.borderColor = ch.color;
+                slot.style.color = ch.color;
+                slot.title = `Play ${ch.name} (${ch.freq}Hz - ${ch.instrument})`;
+                slot.textContent = ch.mantra;
+                slot.addEventListener('click', () => {
+                    sfx.playChakraTone(idx);
+                    showAnnouncement(`🎵 ${ch.name.toUpperCase()} (${ch.freq}Hz)`, ch.instrument, ch.color);
+                });
+                slotsContainer.appendChild(slot);
+            });
+
+            // Soundboard Grid in Sound Lab Modal
+            const sbGrid = document.getElementById('soundboardGrid');
+            sbGrid.innerHTML = '';
+            CHAKRAS.forEach((ch, idx) => {
+                const card = document.createElement('div');
+                card.className = 'btn-action cursor-pointer rounded-2xl p-3 bg-slate-900/90 hover:bg-slate-800 border flex flex-col justify-between';
+                card.style.borderColor = `${ch.color}88`;
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm" style="background:${ch.color}25; color:${ch.color}; border:1px solid ${ch.color}">${ch.mantra}</span>
+                            <span class="font-mono text-xs font-bold" style="color:${ch.color}">${ch.freq} Hz</span>
+                        </div>
+                        <div class="font-cinzel font-bold text-sm text-white">${ch.id}. ${ch.name}</div>
+                        <div class="text-[11px] text-amber-200 font-semibold mt-0.5">🎹 ${ch.instrument}</div>
+                    </div>
+                    <div class="mt-2 pt-1.5 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-400">
+                        <span>Mantra: ${ch.romaji}</span>
+                        <span class="text-cyan-300 font-bold">▶ TAP TO PLAY</span>
+                    </div>
+                `;
+                card.addEventListener('click', () => sfx.playChakraTone(idx));
+                sbGrid.appendChild(card);
+            });
+
+            // Codex List
+            const codexList = document.getElementById('codexChakraList');
+            codexList.innerHTML = '';
+            CHAKRAS.slice().reverse().forEach((ch, revIdx) => {
+                const realIdx = 6 - revIdx;
+                const item = document.createElement('div');
+                item.className = 'cursor-pointer flex items-center justify-between bg-slate-950/85 hover:bg-slate-900 border border-slate-800 rounded-xl px-3 py-2';
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border" style="background:${ch.color}22; border-color:${ch.color}; color:${ch.color}">${ch.mantra}</div>
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold text-white">${ch.id}. ${ch.name} <span class="text-slate-400 font-normal">(${ch.freq}Hz)</span></div>
+                            <div class="text-[11px] text-cyan-300">🎹 ${ch.instrument}</div>
+                        </div>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg font-cinzel font-black text-xs" style="background:${ch.color}25; color:${ch.color}">+${ch.points} PTS 🔊</span>
+                `;
+                item.addEventListener('click', () => sfx.playChakraTone(realIdx));
+                codexList.appendChild(item);
+            });
+        }
+        initUIElements();
+
+        function updateChakraHUD() {
+            CHAKRAS.forEach(ch => {
+                const slot = document.getElementById(`hudChakraSlot_${ch.id}`);
+                if (!slot) return;
+                if (game.collectedSet.has(ch.id)) {
+                    slot.classList.remove('opacity-40');
+                    slot.classList.add('opacity-100', 'scale-110');
+                    slot.style.backgroundColor = ch.color;
+                    slot.style.color = '#070510';
+                } else {
+                    slot.classList.add('opacity-40');
+                    slot.classList.remove('opacity-100', 'scale-110');
+                    slot.style.backgroundColor = '#0f172a';
+                    slot.style.color = ch.color;
+                }
+            });
+            const multBadge = document.getElementById('hudMultiplierBadge');
+            if (game.HigherSelfTimer > 0) {
+                multBadge.textContent = `⚡ HIGHER SELF 2x (${Math.ceil(game.HigherSelfTimer)}s)`;
+            } else {
+                multBadge.textContent = `${game.collectedSet.size}/7 CHAKRAS`;
+            }
+        }
+
+        let announcementTimeout = null;
+        function showAnnouncement(title, subtitle, color = '#fbbf24') {
+            const box = document.getElementById('floatingAnnouncement');
+            const titleEl = document.getElementById('announcementTitle');
+            const subEl = document.getElementById('announcementSub');
+            titleEl.textContent = title;
+            titleEl.style.color = color;
+            subEl.textContent = subtitle;
+            box.classList.remove('opacity-0', 'scale-90');
+            box.classList.add('opacity-100', 'scale-100');
+            if (announcementTimeout) clearTimeout(announcementTimeout);
+            announcementTimeout = setTimeout(() => {
+                box.classList.remove('opacity-100', 'scale-100');
+                box.classList.add('opacity-0', 'scale-90');
+            }, 1850);
+        }
+
+        // Mode Selection Cards in Main Menu
+        document.getElementById('modeCard_openworld').addEventListener('click', () => {
+            activeGameMode = 'openworld';
+            document.getElementById('modeCard_openworld').className = 'cursor-pointer rounded-2xl p-3 border-2 border-emerald-400 bg-gradient-to-r from-emerald-950/80 to-slate-900/90 flex items-center justify-between shadow-lg';
+            document.getElementById('modeCard_runner').className = 'cursor-pointer rounded-2xl p-3 border-2 border-slate-700 bg-slate-900/75 flex items-center justify-between';
+            document.getElementById('modeBadge_openworld').textContent = 'ACTIVE';
+            document.getElementById('modeBadge_openworld').className = 'px-2.5 py-1 rounded-full bg-emerald-400 text-slate-950 font-black text-[10px]';
+            document.getElementById('modeBadge_runner').textContent = 'SELECT';
+            document.getElementById('modeBadge_runner').className = 'px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px]';
+            sfx.playChakraTone(3);
+        });
+
+        document.getElementById('modeCard_runner').addEventListener('click', () => {
+            activeGameMode = 'runner';
+            document.getElementById('modeCard_runner').className = 'cursor-pointer rounded-2xl p-3 border-2 border-purple-400 bg-gradient-to-r from-purple-950/80 to-slate-900/90 flex items-center justify-between shadow-lg';
+            document.getElementById('modeCard_openworld').className = 'cursor-pointer rounded-2xl p-3 border-2 border-slate-700 bg-slate-900/75 flex items-center justify-between';
+            document.getElementById('modeBadge_runner').textContent = 'ACTIVE';
+            document.getElementById('modeBadge_runner').className = 'px-2.5 py-1 rounded-full bg-purple-400 text-slate-950 font-black text-[10px]';
+            document.getElementById('modeBadge_openworld').textContent = 'SELECT';
+            document.getElementById('modeBadge_openworld').className = 'px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px]';
+            sfx.playChakraTone(6);
+        });
+
+        document.getElementById('btnSwitchModeHUD').addEventListener('click', () => {
+            switchActiveGameplayMode(game.mode === 'openworld' ? 'runner' : 'openworld');
+        });
+
+        // Character Selection Cards
+        document.querySelectorAll('.character-card').forEach(card => {
+            card.addEventListener('click', () => {
+                selectedCharKey = card.getAttribute('data-char');
+                document.querySelectorAll('.character-card').forEach(c => {
+                    c.classList.remove('selected');
+                    const b = c.querySelector('.char-select-badge');
+                    if (b) { b.textContent = 'SELECT'; b.className = 'char-select-badge text-slate-500 font-bold'; }
+                });
+                card.classList.add('selected');
+                const ab = card.querySelector('.char-select-badge');
+                if (ab) { ab.textContent = '✓ SELECTED'; ab.className = 'char-select-badge text-amber-300 font-bold'; }
+                sfx.playChakraTone(0);
+            });
+        });
+
+        // Sound Lab Modal Listeners
+        document.getElementById('btnOpenSoundLabMenu').addEventListener('click', () => {
+            sfx.init();
+            document.getElementById('soundLabModal').classList.remove('hidden');
+        });
+        document.getElementById('btnHudSoundLab').addEventListener('click', () => {
+            sfx.init();
+            document.getElementById('soundLabModal').classList.remove('hidden');
+        });
+        document.getElementById('btnCloseSoundLab').addEventListener('click', () => {
+            document.getElementById('soundLabModal').classList.add('hidden');
+        });
+        document.getElementById('btnPlayAllChakraScale').addEventListener('click', () => {
+            sfx.playEnlightenment();
+        });
+
+        // Analytics Modal Listeners
+        function openAnalyticsModal() {
+            refreshFullAnalyticsDashboard();
+            document.getElementById('analyticsModal').classList.remove('hidden');
+        }
+        document.getElementById('btnOpenAnalyticsMenu').addEventListener('click', openAnalyticsModal);
+        document.getElementById('btnHudAnalytics').addEventListener('click', openAnalyticsModal);
+        document.getElementById('btnOpenFullAnalyticsFromGO').addEventListener('click', openAnalyticsModal);
+        document.getElementById('btnCloseAnalytics').addEventListener('click', () => {
+            document.getElementById('analyticsModal').classList.add('hidden');
+        });
+
+        document.getElementById('btnSimulateDemoTelemetry').addEventListener('click', () => {
+            CHAKRAS.forEach(c => { game.chakraCounts[c.id] = 3 + Math.floor(Math.random() * 10); });
+            game.telemetrySamples = [];
+            for (let i = 0; i <= 20; i++) {
+                game.telemetrySamples.push({
+                    t: i * 2,
+                    score: i * 140 + Math.floor(Math.random() * 90),
+                    speed: 32 + i * 1.4,
+                    higherSelf: i > 14
+                });
+            }
+            refreshFullAnalyticsDashboard();
+            renderLiveHudMiniGraphs();
+            sfx.playChakraTone(6);
+        });
+
+        // Photo Packer & Safe Standalone HTML / APK Exporter
+        document.querySelectorAll('.slot-file-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (!file) return;
+                const slot = e.target.getAttribute('data-slot');
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    runtimeAssets[slot] = ev.target.result;
+                    safeStorageSet('chakra_run_asset_' + slot, ev.target.result);
+                    if (loadedImages[slot]) loadedImages[slot].src = ev.target.result;
+                    syncDOMPreviews(slot, ev.target.result);
+                    sfx.playChakraTone(4);
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        document.getElementById('btnResetCustomPhotos').addEventListener('click', () => {
+            ['explorer', 'mystic', 'outlaws', 'chart'].forEach(slot => {
+                runtimeAssets[slot] = null;
+                safeStorageRemove('chakra_run_asset_' + slot);
+            });
+            loadAllGameImages();
+        });
+
+        document.getElementById('btnDownloadStandaloneHTML').addEventListener('click', () => {
+            try {
+                const payload = {
+                    explorer: runtimeAssets.explorer || PROCEDURAL_URIS.explorer,
+                    mystic: runtimeAssets.mystic || PROCEDURAL_URIS.mystic,
+                    outlaws: runtimeAssets.outlaws || PROCEDURAL_URIS.outlaws,
+                    chart: runtimeAssets.chart || PROCEDURAL_URIS.chart
+                };
+                const safeJson = JSON.stringify(payload).replace(/<\/script/gi, '<\\/script');
+                let fullSource = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+                const startMarker = '/*__BAKED_' + 'ASSETS_START__*/';
+                const endMarker = '/*__BAKED_' + 'ASSETS_END__*/';
+                const sIdx = fullSource.indexOf(startMarker);
+                const eIdx = fullSource.indexOf(endMarker);
+                if (sIdx !== -1 && eIdx !== -1 && eIdx > sIdx) {
+                    const replacementBlock = `${startMarker}\n        const BAKED_CUSTOM_ASSETS = ${safeJson};\n        ${endMarker}`;
+                    fullSource = fullSource.substring(0, sIdx) + replacementBlock + fullSource.substring(eIdx + endMarker.length);
+                }
+                const blob = new Blob([fullSource], { type: 'text/html;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'chakra-run-v4.1-gta-standalone.html';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 3000);
+            } catch (e) {}
+        });
+
+        document.getElementById('btnStartRun').addEventListener('click', () => { sfx.init(); startGame(); });
+        document.getElementById('btnPlayAgain').addEventListener('click', startGame);
+        document.getElementById('btnChangeAvatar').addEventListener('click', () => {
+            document.getElementById('gameOverModal').classList.add('hidden');
+            document.getElementById('menuModal').classList.remove('hidden');
+        });
+        document.getElementById('btnPauseGame').addEventListener('click', () => {
+            game.running = false;
+            document.getElementById('hudLayer').classList.add('hidden');
+            document.getElementById('menuModal').classList.remove('hidden');
+        });
+        document.getElementById('btnOpenCodex').addEventListener('click', () => {
+            document.getElementById('codexModal').classList.remove('hidden');
+        });
+        document.getElementById('btnCloseCodex').addEventListener('click', () => {
+            document.getElementById('codexModal').classList.add('hidden');
+        });
+        document.getElementById('btnOpenPacker').addEventListener('click', () => {
+            document.getElementById('packerModal').classList.remove('hidden');
+        });
+        document.getElementById('btnClosePacker').addEventListener('click', () => {
+            document.getElementById('packerModal').classList.add('hidden');
+        });
+        document.getElementById('btnToggleAudio').addEventListener('click', (e) => {
+            sfx.enabled = !sfx.enabled;
+            e.currentTarget.textContent = sfx.enabled ? '🔊 SFX: ON' : '🔇 SFX: OFF';
+        });
+
+        /*************************************************************************
+         * 10. MASTER ANIMATION LOOP WITH LIVE FPS DIAGNOSTICS (v4.1)
+         *************************************************************************/
+        let lastTime = performance.now();
+        let fpsFrames = 0;
+        let fpsElapsed = 0;
+
+        function gameLoop(now) {
+            const rawDt = (now - lastTime) / 1000;
+            const dt = Math.max(0.001, Math.min(0.05, isNaN(rawDt) ? 0.016 : rawDt));
+            lastTime = now;
+            game.time += dt;
+
+            // Live FPS Diagnostic Counter
+            fpsFrames++;
+            fpsElapsed += dt;
+            if (fpsElapsed >= 0.5) {
+                const currentFps = Math.min(60, Math.round(fpsFrames / fpsElapsed));
+                const fpsEl = document.getElementById('hudFpsCounter');
+                if (fpsEl) fpsEl.textContent = `${currentFps} FPS`;
+                fpsFrames = 0;
+                fpsElapsed = 0;
+            }
+
+            if (game.running) {
+                game.runElapsed += dt;
+                for (let i = game.particles.length - 1; i >= 0; i--) {
+                    const p = game.particles[i];
+                    p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt;
+                    p.alpha = Math.max(0, p.life * 2);
+                    if (p.life <= 0) game.particles.splice(i, 1);
+                }
+                if (game.mode === 'openworld') updateOpenWorld(dt);
+                else updateRunnerMode(dt);
+            }
+
+            if (game.mode === 'openworld') renderOpenWorldScene();
+            else renderRunnerScene();
+
+            renderOscilloscope();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function () {
+            resizeCanvas();
+            initOpenWorldSandbox();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
