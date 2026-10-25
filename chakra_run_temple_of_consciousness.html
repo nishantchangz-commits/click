@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#05030c">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Chakra Run v3.0: Temple of Consciousness (Ultra-Realistic & Telemetry Edition)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --gold: #f59e0b;
+            --gold-light: #fde047;
+            --cosmic: #a855f7;
+            --bg-dark: #05030c;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #05030c;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+        .font-cinzel {
+            font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+            letter-spacing: 0.05em;
+        }
+        canvas#gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+            z-index: 0;
+        }
+        .hidden { display: none !important; }
+        .overlay-screen {
+            position: absolute;
+            inset: 0;
+            z-index: 20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            background: radial-gradient(circle at center, rgba(14, 9, 32, 0.85) 0%, rgba(4, 2, 10, 0.94) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            overflow-y: auto;
+        }
+        .modal-card {
+            width: 100%;
+            max-width: 1120px;
+            max-height: 95vh;
+            overflow-y: auto;
+            background: linear-gradient(165deg, rgba(20, 15, 45, 0.96) 0%, rgba(8, 6, 20, 0.98) 100%);
+            border: 1.5px solid rgba(245, 158, 11, 0.45);
+            border-radius: 24px;
+            padding: 18px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 35px rgba(245, 158, 11, 0.2), inset 0 0 25px rgba(168, 85, 247, 0.12);
+            margin: auto;
+        }
+        .character-card {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 2px solid rgba(71, 85, 105, 0.6);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.85) 0%, rgba(9, 13, 26, 0.95) 100%);
+            border-radius: 18px;
+            padding: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+        .character-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(251, 191, 36, 0.8);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+        }
+        .character-card.selected {
+            border-color: #fbbf24;
+            box-shadow: 0 0 28px rgba(251, 191, 36, 0.45), inset 0 0 15px rgba(245, 158, 11, 0.2);
+            background: linear-gradient(180deg, rgba(35, 28, 78, 0.92) 0%, rgba(58, 24, 7, 0.85) 100%);
+        }
+        .btn-gold {
+            background: linear-gradient(90deg, #d97706 0%, #fde047 50%, #d97706 100%);
+            background-size: 200% auto;
+            color: #090514;
+            font-weight: 900;
+            border-radius: 16px;
+            padding: 13px 26px;
+            border: 1px solid #fef08a;
+            cursor: pointer;
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.55);
+            transition: all 0.2s ease;
+        }
+        .btn-gold:hover {
+            background-position: right center;
+            transform: translateY(-1px);
+            box-shadow: 0 0 32px rgba(253, 224, 71, 0.8);
+        }
+        .btn-gold:active {
+            transform: scale(0.96);
+        }
+        .btn-action {
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+        .glass-panel {
+            background: rgba(10, 8, 24, 0.82);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(245, 158, 11, 0.32);
+        }
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.75)); }
+            50% { filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.95)); }
+        }
+        .title-glow {
+            animation: pulseGlow 3.2s infinite;
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.6); border-radius: 9999px; }
+    </style>
+</head>
+<body class="relative w-screen h-screen overflow-hidden select-none bg-[#05030c]">
+
+    <!-- MAIN 3D ULTRA-REALISTIC RUNNER CANVAS -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- IN-GAME HUD WITH LIVE TELEMETRY GRAPHS (v3.0) -->
+    <div id="hudLayer" class="hidden absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-2 sm:p-4">
+        <!-- Top Row: Score, 7-Chakra Matrix, Live Telemetry Graphs, Controls -->
+        <div class="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-2 w-full max-w-7xl mx-auto">
+            
+            <!-- Left Stats & Biome Indicator -->
+            <div class="flex items-center justify-between sm:justify-start gap-3 glass-panel rounded-2xl px-3.5 py-2 pointer-events-auto shadow-xl">
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                        <span class="text-[9px] uppercase tracking-widest text-amber-300/90 font-bold">Consciousness</span>
+                    </div>
+                    <div id="hudScore" class="text-lg sm:text-2xl font-cinzel font-black text-amber-400 leading-tight">0</div>
+                </div>
+                <div class="h-8 w-[1px] bg-slate-700/80"></div>
+                <div>
+                    <div class="text-[9px] uppercase tracking-widest text-slate-400">Distance</div>
+                    <div id="hudDistance" class="text-xs sm:text-base font-bold text-white">0m</div>
+                </div>
+                <div class="h-8 w-[1px] bg-slate-700/80"></div>
+                <div>
+                    <div class="text-[9px] uppercase tracking-widest text-purple-300">Resonance</div>
+                    <div id="hudBalanceIndex" class="text-xs sm:text-base font-bold text-purple-300">100%</div>
+                </div>
+                <div class="hidden sm:block h-8 w-[1px] bg-slate-700/80"></div>
+                <div class="hidden sm:block">
+                    <div class="text-[9px] uppercase tracking-widest text-cyan-300">Biome</div>
+                    <div id="hudBiomeName" class="text-xs font-bold text-cyan-200">Eldorado Jungle</div>
+                </div>
+            </div>
+
+            <!-- Center: 7-Chakra Alignment Tracker -->
+            <div class="flex flex-col items-center glass-panel border-purple-500/40 rounded-2xl px-3 py-1.5 pointer-events-auto shadow-xl">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-amber-200">7-Chakra Harmonic Matrix</span>
+                    <span id="hudMultiplierBadge" class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 font-bold">0/7 ALIGNED</span>
+                </div>
+                <div id="chakraSlotsContainer" class="flex items-center gap-1 sm:gap-2"></div>
+            </div>
+
+            <!-- Right: Live Telemetry Sparkline & Harmonic Equalizer + Controls -->
+            <div class="flex items-center justify-between sm:justify-end gap-2 pointer-events-auto">
+                <!-- Live Real-Time Telemetry Mini-Graphs -->
+                <div class="flex items-center gap-2 glass-panel rounded-2xl px-2.5 py-1.5 shadow-xl" title="Live Consciousness Velocity & 7-Chakra Harmonic Equalizer">
+                    <div class="flex flex-col">
+                        <div class="flex items-center justify-between text-[9px] text-amber-300 font-bold uppercase tracking-wider mb-0.5">
+                            <span>⚡ Energy Velocity</span>
+                            <span id="hudVelocityVal" class="text-emerald-300 font-mono">32m/s</span>
+                        </div>
+                        <canvas id="hudSparklineCanvas" width="128" height="34" class="rounded bg-slate-950/90 border border-slate-800"></canvas>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="text-[9px] text-purple-300 font-bold uppercase tracking-wider mb-0.5">7-EQ</div>
+                        <canvas id="hudEqualizerCanvas" width="64" height="34" class="rounded bg-slate-950/90 border border-slate-800"></canvas>
+                    </div>
+                </div>
+
+                <div id="shieldIndicator" class="hidden items-center gap-1 bg-cyan-950/90 border border-cyan-400/60 text-cyan-200 px-2.5 py-1.5 rounded-xl text-xs font-bold shadow-md">
+                    <span>🛡️ Aegis</span>
+                </div>
+                <button id="btnHudAnalytics" class="btn-action glass-panel hover:bg-slate-800 text-emerald-300 border border-emerald-500/40 rounded-xl px-2.5 py-2 text-xs font-bold" title="View Live Analytics Graphs">
+                    📊
+                </button>
+                <button id="btnHudFullscreen" class="btn-action glass-panel hover:bg-slate-800 text-purple-300 border border-purple-500/40 rounded-xl px-2.5 py-2 text-xs font-bold" title="Fullscreen Mode">
+                    ⛶
+                </button>
+                <button id="btnPauseGame" class="btn-action glass-panel hover:bg-slate-800 text-amber-300 border border-amber-500/40 rounded-xl px-3 py-2 text-xs font-bold">
+                    ⏸
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Floating Notifications -->
+        <div id="floatingAnnouncement" class="flex flex-col items-center justify-center text-center pointer-events-none transition-all duration-300 opacity-0 transform scale-90">
+            <div id="announcementTitle" class="font-cinzel text-2xl sm:text-4xl font-black text-amber-300 drop-shadow-[0_4px_16px_rgba(245,158,11,0.95)]"></div>
+            <div id="announcementSub" class="text-xs sm:text-sm font-semibold text-purple-200 bg-slate-950/90 px-4 py-1 rounded-full mt-1 border border-purple-400/50 shadow-lg"></div>
+        </div>
+
+        <!-- Bottom Touch Controls for Mobile / Tablet -->
+        <div class="flex items-end justify-between w-full max-w-2xl mx-auto pointer-events-auto pb-1 sm:pb-2">
+            <div class="flex gap-2.5">
+                <button id="btnTouchLeft" class="btn-action w-14 h-14 sm:w-16 sm:h-16 rounded-2xl glass-panel active:bg-amber-500/40 border border-amber-500/50 flex items-center justify-center text-2xl text-amber-300 shadow-xl">
+                    ◀
+                </button>
+                <button id="btnTouchRight" class="btn-action w-14 h-14 sm:w-16 sm:h-16 rounded-2xl glass-panel active:bg-amber-500/40 border border-amber-500/50 flex items-center justify-center text-2xl text-amber-300 shadow-xl">
+                    ▶
+                </button>
+            </div>
+
+            <div class="hidden sm:flex flex-col items-center text-[11px] text-slate-300 glass-panel px-3.5 py-1.5 rounded-xl border border-slate-700/80">
+                <span><strong class="text-amber-300">Swipe</strong> or <strong class="text-amber-300">WASD / Arrows</strong> • Tap 📊 for Telemetry</span>
+                <span>Align all 7 Chakras for <strong class="text-purple-300">Higher Self Cosmic Flight</strong></span>
+            </div>
+
+            <div class="flex gap-2.5">
+                <button id="btnTouchSlide" class="btn-action w-14 h-14 sm:w-16 sm:h-16 rounded-2xl glass-panel active:bg-purple-500/40 border border-purple-500/50 flex flex-col items-center justify-center text-purple-300 shadow-xl">
+                    <span class="text-lg leading-none">▼</span>
+                    <span class="text-[10px] font-bold uppercase mt-0.5">Slide</span>
+                </button>
+                <button id="btnTouchJump" class="btn-action w-14 h-14 sm:w-16 sm:h-16 rounded-2xl glass-panel active:bg-emerald-500/40 border border-emerald-500/50 flex flex-col items-center justify-center text-emerald-300 shadow-xl">
+                    <span class="text-lg leading-none">▲</span>
+                    <span class="text-[10px] font-bold uppercase mt-0.5">Jump</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN MENU & ULTRA-REALISTIC CHARACTER SELECTION MODAL -->
+    <div id="menuModal" class="overlay-screen">
+        <div class="modal-card">
+            <!-- Header -->
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-3 border-b border-slate-800/90 pb-4 mb-4">
+                <div class="text-center lg:text-left">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-[11px] font-bold mb-1">
+                        <span>🕉️</span> VERSION 3.0 • ULTRA-REALISTIC ENGINE & LIVE TELEMETRY GRAPHS
+                    </div>
+                    <h1 class="font-cinzel text-2xl sm:text-4xl font-black tracking-wider bg-gradient-to-r from-amber-300 via-yellow-100 to-purple-400 bg-clip-text text-transparent title-glow" style="color:#fde047;">
+                        CHAKRA TEMPLE RUN 3.0
+                    </h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-0.5">
+                        Experience volumetric temple lighting, photorealistic procedural portraits, and real-time Chakra consciousness graphs.
+                    </p>
+                </div>
+
+                <!-- Action Toolbar -->
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <button id="btnOpenAnalyticsMenu" class="btn-action flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-400/60 text-emerald-200 font-bold text-xs sm:text-sm shadow-lg">
+                        <span>📊</span> Analytics & Graphs
+                    </button>
+                    <button id="btnOpenCodex" class="btn-action flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-900/60 hover:bg-purple-800/80 border border-purple-400/50 text-purple-100 font-semibold text-xs sm:text-sm shadow-lg">
+                        <span>📜</span> 7 Chakras Chart
+                    </button>
+                    <button id="btnOpenPacker" class="btn-action flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/60 text-amber-200 font-bold text-xs sm:text-sm shadow-lg">
+                        <span>📦</span> Pack Photos / APK
+                    </button>
+                    <button id="btnMenuFullscreen" class="btn-action px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600 text-cyan-300 font-semibold text-xs sm:text-sm">
+                        ⛶
+                    </button>
+                    <button id="btnToggleAudio" class="btn-action px-3 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-600 text-amber-300 font-semibold text-xs sm:text-sm">
+                        🔊 SFX: ON
+                    </button>
+                </div>
+            </div>
+
+            <!-- Character Selection Section -->
+            <div class="mb-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2.5">
+                    <h2 class="font-cinzel text-base sm:text-lg font-bold text-amber-300 uppercase tracking-wider">
+                        Choose Your Avatar & Dynamic Biome
+                    </h2>
+                    <span id="photoStatusBadge" class="text-[11px] text-emerald-300 bg-emerald-950/70 border border-emerald-500/40 px-3 py-0.5 rounded-full font-medium">
+                        ✓ v3.0 Photorealistic Procedural Portraits Active (Or tap "Pack Photos" to embed gallery files)
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="characterCardsGrid">
+                    <!-- Character 1: Golden Jungle Explorer -->
+                    <div data-char="explorer" class="character-card selected">
+                        <div>
+                            <div class="relative w-full h-48 rounded-xl overflow-hidden mb-2.5 border border-amber-500/50 bg-amber-950/40 shadow-inner">
+                                <img id="cardImg_explorer" src="1000062477.png" alt="Golden Jungle Explorer" class="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105">
+                                <div class="absolute top-2 left-2 bg-slate-950/80 border border-amber-400/50 text-amber-300 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                    🌴 Biome: Eldorado Golden Jungle
+                                </div>
+                                <div class="absolute top-2 right-2 bg-amber-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
+                                    Alchemist
+                                </div>
+                                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-2.5">
+                                    <div class="font-cinzel font-bold text-amber-300 text-base leading-tight">Golden Explorer</div>
+                                    <div class="text-[11px] text-amber-100/80">Metallic Seeker of the Sacred Vines</div>
+                                </div>
+                            </div>
+                            <div class="bg-amber-950/40 border border-amber-500/30 rounded-xl p-2.5 mb-2">
+                                <div class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                                    <span>🧲</span> Golden Magnet Aura & 2x Solar
+                                </div>
+                                <p class="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                                    High-range magnetic field pulls Chakra orbs across lanes and awards <strong>2x points</strong> on Root (Red) & Solar Plexus (Yellow) Chakras.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                            <span>Magnet Field: <strong class="text-amber-400">Ultra-Wide</strong></span>
+                            <span class="char-select-badge text-amber-300 font-bold">✓ SELECTED</span>
+                        </div>
+                    </div>
+
+                    <!-- Character 2: Ocean Mystic -->
+                    <div data-char="mystic" class="character-card">
+                        <div>
+                            <div class="relative w-full h-48 rounded-xl overflow-hidden mb-2.5 border border-cyan-500/50 bg-cyan-950/40 shadow-inner">
+                                <img id="cardImg_mystic" src="1000062481.jpg" alt="Ocean Mystic" class="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105">
+                                <div class="absolute top-2 left-2 bg-slate-950/80 border border-cyan-400/50 text-cyan-300 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                    🌊 Biome: Azure Coastal Sanctuary
+                                </div>
+                                <div class="absolute top-2 right-2 bg-cyan-400 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
+                                    Priestess
+                                </div>
+                                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-2.5">
+                                    <div class="font-cinzel font-bold text-cyan-300 text-base leading-tight">Ocean Mystic</div>
+                                    <div class="text-[11px] text-cyan-100/80">Sovereign of Sunlit Tides</div>
+                                </div>
+                            </div>
+                            <div class="bg-cyan-950/40 border border-cyan-500/30 rounded-xl p-2.5 mb-2">
+                                <div class="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
+                                    <span>🛡️</span> Flow State Aegis Shield
+                                </div>
+                                <p class="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                                    Starts with a shimmering <strong>Water Aegis Barrier</strong> (absorbs 1 obstacle impact) and recharges it upon collecting Sacral or Throat Chakras!
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                            <span>Defense: <strong class="text-cyan-400">Auto-Regen Shield</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">TAP TO SELECT</span>
+                        </div>
+                    </div>
+
+                    <!-- Character 3: Outlaw Duo & Sheriff Hound -->
+                    <div data-char="outlaws" class="character-card">
+                        <div>
+                            <div class="relative w-full h-48 rounded-xl overflow-hidden mb-2.5 border border-orange-500/50 bg-orange-950/40 shadow-inner">
+                                <img id="cardImg_outlaws" src="1000062478.png" alt="Outlaw Duo & Sheriff Hound" class="w-full h-full object-cover object-top transition-transform duration-500 hover:scale-105">
+                                <div class="absolute top-2 left-2 bg-slate-950/80 border border-orange-400/50 text-orange-300 font-bold text-[10px] px-2 py-0.5 rounded-md">
+                                    🏜️ Biome: Sepia Canyon Saloon
+                                </div>
+                                <div class="absolute top-2 right-2 bg-orange-500 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider shadow">
+                                    Frontier Pack
+                                </div>
+                                <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-2.5">
+                                    <div class="font-cinzel font-bold text-orange-300 text-base leading-tight">Outlaw Duo & Hound</div>
+                                    <div class="text-[11px] text-orange-100/80"> dust-forged Riders & Sheriff Rottweiler</div>
+                                </div>
+                            </div>
+                            <div class="bg-orange-950/40 border border-orange-500/30 rounded-xl p-2.5 mb-2">
+                                <div class="text-xs font-bold text-orange-300 flex items-center gap-1.5">
+                                    <span>🐾</span> Frontier Reflex & Hound Bonus
+                                </div>
+                                <p class="text-[11px] text-slate-300 mt-0.5 leading-relaxed">
+                                    Instantaneous lane-switching, higher vaulting jump arcs, and their loyal Sheriff Rottweiler grants <strong>+50% bonus</strong> on Heart & Crown!
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800">
+                            <span>Agility: <strong class="text-orange-400">Maximum Reflex</strong></span>
+                            <span class="char-select-badge text-slate-500 font-bold">TAP TO SELECT</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Strip & Launch Button -->
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-3 bg-slate-950/90 border border-slate-800 rounded-2xl p-3">
+                <div class="flex flex-wrap items-center justify-center gap-1.5 text-[11px]">
+                    <span class="text-slate-400 font-semibold mr-1">Solfeggio Chakra Points:</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-red-950/80 border border-red-500/50 text-red-300 font-bold">1. Muladhara +10</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-orange-950/80 border border-orange-500/50 text-orange-300 font-bold">2. Svadhisthana +20</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-yellow-950/80 border border-yellow-500/50 text-yellow-300 font-bold">3. Manipura +30</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-emerald-950/80 border border-emerald-500/50 text-emerald-300 font-bold">4. Anahata +40</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-sky-950/80 border border-sky-500/50 text-sky-300 font-bold">5. Vishuddha +50</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-indigo-950/80 border border-indigo-500/50 text-indigo-300 font-bold">6. Ajna +75</span>
+                    <span class="px-2 py-0.5 rounded-lg bg-purple-950/80 border border-purple-500/50 text-purple-200 font-bold">7. Sahasrara +100</span>
+                </div>
+
+                <button id="btnStartRun" class="btn-gold w-full lg:w-auto font-cinzel text-base sm:text-lg tracking-wider whitespace-nowrap">
+                    ⚡ AWAKEN & ENTER TEMPLE
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INTERACTIVE ANALYTICS & TELEMETRY GRAPHS DASHBOARD MODAL (NEW IN v3.0) -->
+    <div id="analyticsModal" class="hidden overlay-screen" style="z-index: 38;">
+        <div class="modal-card max-w-6xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3 mb-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-emerald-400">
+                        <span>📈</span> CHAKRA ALGORITHM TELEMETRY LABORATORY (v3.0)
+                    </div>
+                    <h2 class="font-cinzel text-xl sm:text-2xl font-black text-amber-300">
+                        CONSCIOUSNESS RESONANCE & ENERGY GRAPHS
+                    </h2>
+                    <p class="text-xs text-slate-400">
+                        Formula: <code class="text-amber-300 font-mono">Balance = ∑ (Chakra Energy × Awareness)</code> • Real-time & Historical Biometric Telemetry
+                    </p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="btnSimulateDemoTelemetry" class="btn-action px-3 py-1.5 rounded-xl bg-purple-900/70 hover:bg-purple-800 text-purple-200 font-bold text-xs border border-purple-500/50">
+                        ✨ Simulate Sample Data
+                    </button>
+                    <button id="btnCloseAnalytics" class="btn-action px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-
