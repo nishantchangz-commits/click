@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NESTED MIND 2.0: The World Inside Consciousness</title>
+  <style>
+    :root {
+      --gold: #ffd166;
+      --gold-glow: rgba(255, 209, 102, 0.55);
+      --cyan: #5ce1e6;
+      --pink: #ff66c4;
+      --dark: rgba(10, 10, 16, 0.85);
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #050508;
+      color: #f4f4f8;
+    }
+    #game-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* OVERLAYS & MENUS */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle at center, rgba(16,16,28,0.78) 0%, rgba(4,4,8,0.96) 100%);
+      backdrop-filter: blur(10px);
+      z-index: 20;
+      transition: opacity 0.4s ease;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .menu-card {
+      max-width: 620px;
+      width: 90%;
+      padding: 40px;
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      background: rgba(12, 12, 20, 0.88);
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 209, 102, 0.15);
+      border-radius: 12px;
+      text-align: center;
+    }
+    .game-title {
+      font-size: 2.5rem;
+      letter-spacing: 5px;
+      color: var(--gold);
+      text-shadow: 0 0 18px var(--gold-glow);
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .game-subtitle {
+      font-size: 0.95rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #b8b8d0;
+      margin-bottom: 24px;
+    }
+    .lore-blurb {
+      font-size: 0.92rem;
+      line-height: 1.6;
+      color: #d0d0e0;
+      margin-bottom: 28px;
+      border-left: 3px solid var(--gold);
+      padding-left: 14px;
+      text-align: left;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    button {
+      padding: 13px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #0b0b12;
+      background: linear-gradient(135deg, #ffd166 0%, #dca12b 100%);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px var(--gold-glow);
+    }
+    button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e4e4f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    button.secondary:hover {
+      background: rgba(255, 209, 102, 0.18);
+      border-color: var(--gold);
+    }
+
+    /* HUD */
+    #hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .hud-top-left {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: var(--dark);
+      border: 1px solid rgba(255, 209, 102, 0.3);
+      padding: 16px 20px;
+      border-radius: 10px;
+      min-width: 310px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+    .dimension-badge {
+      font-size: 0.75rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 4px;
+      font-weight: 700;
+    }
+    .objective-title {
+      font-size: 0.8rem;
+      color: #9a9ab0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .objective-text {
+      font-size: 1rem;
+      color: #ffffff;
+      font-weight: 600;
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+    .progress-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.82rem;
+      color: var(--gold);
+    }
+    .corruption-bar-wrap {
+      margin-top: 10px;
+    }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #ccc;
+      margin-bottom: 4px;
+    }
+    .bar-track {
+      width: 100%;
+      height: 7px;
+      background: rgba(255,255,255,0.12);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      width: 65%;
+      background: linear-gradient(90deg, #5ce1e6, #ffd166, #ff477e);
+      transition: width 0.3s ease;
+    }
+
+    /* CONTROLS LEGEND TOP RIGHT */
+    .hud-top-right {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: var(--dark);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      line-height: 1.65;
+      color: #d0d0e0;
+    }
+    .key {
+      display: inline-block;
+      padding: 1px 6px;
+      background: rgba(255, 209, 102, 0.18);
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 0.74rem;
+      margin-right: 4px;
+    }
+
+    /* CHAKRA ABILITY BAR BOTTOM */
+    .chakra-dock {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      background: var(--dark);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      pointer-events: auto;
+    }
+    .chakra-slot {
+      width: 72px;
+      height: 74px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      text-align: center;
+      position: relative;
+      transition: all 0.2s ease;
+      opacity: 0.4;
+    }
+    .chakra-slot.unlocked {
+      opacity: 1;
+    }
+    .chakra-slot.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 16px var(--gold-glow);
+      transform: translateY(-4px);
+      background: rgba(255, 209, 102, 0.15);
+    }
+    .slot-key {
+      position: absolute;
+      top: 4px;
+      left: 6px;
+      font-size: 0.65rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .slot-dot {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin-bottom: 5px;
+      box-shadow: 0 0 10px currentColor;
+    }
+    .slot-name {
+      font-size: 0.65rem;
+      font-weight: 600;
+      line-height: 1.1;
+      color: #e8e8f2;
+    }
+
+    /* INTERACTION PROMPT & TOAST */
+    #prompt-box {
+      position: absolute;
+      bottom: 118px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(10, 10, 16, 0.92);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 8px 18px;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      box-shadow: 0 0 20px rgba(255, 209, 102, 0.3);
+    }
+    #toast-box {
+      position: absolute;
+      top: 22%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(14, 14, 24, 0.92);
+      border: 1px solid var(--cyan);
+      color: #fff;
+      padding: 12px 26px;
+      border-radius: 8px;
+      font-size: 1rem;
+      letter-spacing: 1.2px;
+      text-align: center;
+      box-shadow: 0 0 25px rgba(92, 225, 230, 0.4);
+      transition: opacity 0.3s ease;
+    }
+    #boss-hud {
+      position: absolute;
+      top: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 420px;
+      background: rgba(15, 8, 20, 0.9);
+      border: 1px solid #ff477e;
+      padding: 10px 16px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .boss-title {
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      color: #ff66c4;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .boss-bar-bg {
+      width: 100%;
+      height: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    #boss-bar-fill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff0055, #ffd166);
+      transition: width 0.2s ease;
+    }
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 14px 0;
+      font-size: 0.95rem;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+  <canvas id="game-canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hud-top-left">
+      <div id="dimension-label" class="dimension-badge">DIMENSION I: MONOCHROME SUBCONSCIOUS</div>
+      <div class="objective-title">Current Thread Objective</div>
+      <div id="objective-text" class="objective-text">Locate the Mysterious Girl in the monochrome plaza.</div>
+      <div class="progress-row">
+        <span id="memories-count">Memories: 0 / 3</span>
+        <span id="chakras-count">Chakras: 2 / 7</span>
+      </div>
+      <div class="corruption-bar-wrap">
+        <div class="bar-label">
+          <span>Mind Clarity vs Shadow Tendrils</span>
+          <span id="clarity-pct">35%</span>
+        </div>
+        <div class="bar-track">
+          <div id="clarity-fill" class="bar-fill" style="width: 35%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="boss-hud" class="hidden">
+      <div class="boss-title">AMALGAM OF FEAR — SHADOW TENDRIL ENTITY</div>
+      <div class="boss-bar-bg">
+        <div id="boss-bar-fill"></div>
+      </div>
+    </div>
+
+    <div class="hud-top-right">
+      <div><span class="key">W A S D</span> Move Traveler</div>
+      <div><span class="key">SPACE</span> Jump / Float</div>
+      <div><span class="key">DRAG MOUSE</span> Orbit Camera</div>
+      <div><span class="key">E</span> Interact / Weave Thread</div>
+      <div><span class="key">Q</span> Execute Active Chakra Ability</div>
+      <div><span class="key">1 - 7</span> Select Chakra Node</div>
+      <div><span class="key">TAB</span> Shift Mind Dimension</div>
+      <div><span class="key">ESC</span> Pause / Save Mindstate</div>
+    </div>
+
+    <div id="prompt-box" class="hidden">Press [E] to Interact</div>
+    <div id="toast-box" class="hidden">MEMORY SYNAPSE CONNECTED</div>
+
+    <div class="chakra-dock" id="chakra-dock"></div>
+  </div>
+
+  <!-- MAIN MENU -->
+  <div id="main-menu" class="overlay">
+    <div class="menu-card">
+      <div class="game-title">NESTED MIND 2.0</div>
+      <div class="game-subtitle">The World Inside Consciousness</div>
+      <div class="lore-blurb">
+        You awaken as the Golden Traveler—half-consumed by dark subconscious tendrils. Weave golden energy threads between memories, shift across 3 nested mind dimensions, awaken the 7 Chakra frequencies, and forge the Sword of Light to purge the Shadow Trauma Entity.
+      </div>
+      <div class="btn-group">
+        <button id="btn-new-game">Awaken New Mind (New Game)</button>
+        <button id="btn-continue" class="secondary">Restore Saved Synapse (Continue)</button>
+        <button id="btn-settings" class="secondary">Sensory Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAUSE MENU -->
+  <div id="pause-menu" class="overlay hidden">
+    <div class="menu-card">
+      <div class="game-title" style="font-size:2rem;">CONSCIOUSNESS PAUSED</div>
+      <div class="game-subtitle">Synapse State Suspended</div>
+      <div class="btn-group">
+        <button id="btn-resume">Resume Exploration</button>
+        <button id="btn-save" class="secondary">Save Progress to LocalStorage</button>
+        <button id="btn-load" class="secondary">Load Saved Progress</button>
+        <button id="btn-quit" class="secondary">Return to Title Screen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS MODAL -->
+  <div id="settings-menu" class="overlay hidden">
+    <div class="menu-card">
+      <div class="game-title" style="font-size:1.9rem;">SENSORY SETTINGS</div>
+      <div class="settings-row">
+        <span>Synthesized WebAudio Soundscapes</span>
+        <input type="checkbox" id="chk-sound" checked />
+      </div>
+      <div class="settings-row">
+        <span>Camera Orbit Sensitivity</span>
+        <input type="range" id="rng-sens" min="1" max="10" value="5" />
+      </div>
+      <div class="btn-group" style="margin-top:20px;">
+        <button id="btn-close-settings">Apply & Return</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**************************************************************
+     * 1. PROCEDURAL WEB AUDIO SYNTHESIZER
+     **************************************************************/
+    class MindAudio {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          this.ctx = new AudioCtx();
+        }
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+      }
+      playTone(freq = 440, type = 'sine', duration = 0.35, gainVal = 0.12, slideTo = null) {
+        if (!this.enabled) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, now);
+        if (slideTo) {
+          osc.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+        }
+        gain.gain.setValueAtTime(gainVal, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+      playChord(freqs, duration = 0.6) {
+        freqs.forEach((f, idx) => {
+          setTimeout(() => this.playTone(f, 'triangle', duration, 0.08), idx * 45);
+        });
+      }
+      sfxThread() { this.playChord([528, 660, 792, 1056], 0.7); }
+      sfxPortal() { this.playTone(180, 'sawtooth', 0.9, 0.12, 720); }
+      sfxColorWave() { this.playChord([432, 540, 648], 0.5); }
+      sfxSwordSlash() { this.playTone(620, 'sawtooth', 0.22, 0.15, 140); }
+      sfxBossHit() { this.playTone(110, 'square', 0.3, 0.18, 55); }
+    }
+    const audio = new MindAudio();
+
+    /**************************************************************
+     * 2. CHAKRA ABILITIES & GAME STATE
+     **************************************************************/
+    const CHAKRAS = [
+      { id: 1, name: "Chroma Pulse", color: "#ff3366", unlocked: true, desc: "Infuse monochrome structures with luminous color energy." },
+      { id: 2, name: "Golden Thread", color: "#ffd166", unlocked: true, desc: "Weave glowing threads between beings, symbols, and art." },
+      { id: 3, name: "Light Construct", color: "#ffee55", unlocked: false, desc: "Materialize solid golden-light stepping platforms in mid-air." },
+      { id: 4, name: "Gravity Inversion", color: "#33ff99", unlocked: false, desc: "Manipulate gravitational pull to float across high geometric chasms." },
+      { id: 5, name: "Dimension Shift", color: "#33ddff", unlocked: false, desc: "Phase directly between Monochrome, Geometric, and Shadow realms." },
+      { id: 6, name: "Third Eye Resonance", color: "#8855ff", unlocked: false, desc: "Reveal hidden memory symbols and resonate ancient monoliths." },
+      { id: 7, name: "Solar Lightblade", color: "#ffffff", unlocked: false, desc: "Manifest the Golden Sword of Consciousness to purge Shadow Fear." }
+    ];
+
+    const state = {
+      running: false,
+      paused: false,
+      dimension: 0, // 0: Monochrome City, 1: Floating Geometric Voxel Realm, 2: Shadow/Star Memory Realm
+      activeChakra: 2,
+      girlSpoken: false,
+      threadConnected: false,
+      portalOpened: false,
+      memoriesFound: 0,
+      totalMemories: 3,
+      clarity: 35,
+      lowGravity: false,
+      bossHealth: 100,
+      bossDefeated: false,
+      cameraSensitivity: 0.005,
+      swordSwingTimer: 0
+    };
+
+    /**************************************************************
+     * 3. THREE.JS SCENE, CAMERA & PROCEDURAL TEXTURES
+     **************************************************************/
+    const canvas = document.getElementById('game-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0b0b10);
+    scene.fog = new THREE.FogExp2(0x0b0b10, 0.014);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 400);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+    scene.add(ambientLight);
+
+    const dirLight = new THREE.DirectionalLight(0xfff0dd, 0.9);
+    dirLight.position.set(25, 45, 25);
+    dirLight.castShadow = true;
+    scene.add(dirLight);
+
+    const goldPointLight = new THREE.PointLight(0xffd166, 1.5, 35);
+    scene.add(goldPointLight);
+
+    // Helper: create dynamic canvas texture for the Transforming Gallery Painting
+    const paintingCanvas = document.createElement('canvas');
+    paintingCanvas.width = 256;
+    paintingCanvas.height = 256;
+    const pCtx = paintingCanvas.getContext('2d');
+    const paintingTexture = new THREE.CanvasTexture(paintingCanvas);
+
+    function drawPaintingTexture(awakened = false, time = 0) {
+      pCtx.fillStyle = awakened ? '#120824' : '#181818';
+      pCtx.fillRect(0, 0, 256, 256);
+
+      // Concentric surreal geometry
+      for (let i = 5; i > 0; i--) {
+        pCtx.save();
+        pCtx.translate(128, 128);
+        pCtx.rotate(time * 0.4 * (i % 2 === 0 ? 1 : -1));
+        pCtx.strokeStyle = awakened
+          ? `hsl(${(i * 55 + time * 40) % 360}, 90%, 65%)`
+          : `rgb(${40 + i * 30},${40 + i * 30},${40 + i * 30})`;
+        pCtx.lineWidth = 4;
+        pCtx.strokeRect(-i * 18, -i * 18, i * 36, i * 36);
+        pCtx.restore();
+      }
+      // Golden center eye/portal
+      pCtx.beginPath();
+      pCtx.arc(128, 128, awakened ? 34 + Math.sin(time * 4) * 6 : 20, 0, Math.PI * 2);
+      pCtx.fillStyle = awakened ? '#ffd166' : '#777777';
+      pCtx.fill();
+      paintingTexture.needsUpdate = true;
+    }
+    drawPaintingTexture(false, 0);
+
+    /**************************************************************
+     * 4. CHARACTER BUILDER: THE GOLDEN TRAVELER (FROM REFERENCE)
+     **************************************************************/
+    const playerGroup = new THREE.Group();
+    scene.add(playerGroup);
+
+    const goldSuitMat = new THREE.MeshStandardMaterial({
+      color: 0xd4a238,
+      metalness: 0.78,
+      roughness: 0.25
+    });
+    const darkTendrilMat = new THREE.MeshStandardMaterial({
+      color: 0x0c0c12,
+      roughness: 0.4,
+      metalness: 0.3
+    });
+    const swordLightMat = new THREE.MeshBasicMaterial({
+      color: 0xffe680
+    });
+
+    // Torso (Gold Jacket)
+    const torso = new THREE.Mesh(new THREE.BoxGeometry(0.95, 1.35, 0.55), goldSuitMat);
+    torso.position.y = 1.65;
+    torso.castShadow = true;
+    playerGroup.add(torso);
+
+    // Golden Explorer Backpack
+    const backpack = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.95, 0.42), goldSuitMat);
+    backpack.position.set(0, 1.72, -0.45);
+    backpack.castShadow = true;
+    playerGroup.add(backpack);
+
+    // Head (Half Gold, Half Corrupted Tendrils)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.38, 20, 20), goldSuitMat);
+    head.position.y = 2.68;
+    playerGroup.add(head);
+
+    // Legs & Arms
+    const leftLeg = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.95, 0.38), goldSuitMat);
+    leftLeg.position.set(-0.24, 0.5, 0);
+    playerGroup.add(leftLeg);
+
+    const rightLeg = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.95, 0.38), goldSuitMat);
+    rightLeg.position.set(0.24, 0.5, 0);
+    playerGroup.add(rightLeg);
+
+    const leftArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.0, 0.3), goldSuitMat);
+    leftArm.position.set(-0.68, 1.65, 0);
+    playerGroup.add(leftArm);
+
+    const rightArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.0, 0.3), goldSuitMat);
+    rightArm.position.set(0.68, 1.65, 0);
+    playerGroup.add(rightArm);
+
+    // Golden Sword of Light (attached to right hand, toggled when Chakra 7 or combat active)
+    const swordGroup = new THREE.Group();
+    const swordBlade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.3, 0.24), swordLightMat);
+    swordBlade.position.y = 1.3;
+    const swordGuard = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.14, 0.3), goldSuitMat);
+    swordGuard.position.y = 0.2;
+    swordGroup.add(swordBlade, swordGuard);
+    swordGroup.position.set(0, -0.4, 0.35);
+    swordGroup.rotation.x = Math.PI / 2.2;
+    swordGroup.visible = false;
+    rightArm.add(swordGroup);
+
+    // Writhing Black Subconscious Tendrils (matching the concept art & video)
+    const playerTendrils = [];
+    for (let i = 0; i < 14; i++) {
+      const tGeo = new THREE.ConeGeometry(0.08, 1.15, 8);
+      tGeo.translate(0, 0.55, 0);
+      const tMesh = new THREE.Mesh(tGeo, darkTendrilMat);
+      tMesh.position.set(
+        (Math.random() - 0.5) * 0.5,
+        2.35 + Math.random() * 0.45,
+        (Math.random() - 0.5) * 0.4
+      );
+      tMesh.rotation.set(
+        (Math.random() - 0.5) * 1.6,
+        Math.random() * Math.PI * 2,
+        (Math.random() - 0.5) * 1.6
+      );
+      playerGroup.add(tMesh);
+      playerTendrils.push({
+        mesh: tMesh,
+        baseRotX: tMesh.rotation.x,
+        baseRotZ: tMesh.rotation.z,
+        speed: 2 + Math.random() * 2.5,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+
+    playerGroup.position.set(0, 0, 18);
+
+    /**************************************************************
+     * 5. WORLD DIMENSIONS & MODULAR ENVIRONMENTS
+     **************************************************************/
+    const collidablePlatforms = [];
+    const colorableMeshes = [];
+    const lightConstructs = [];
+    const memoryNodes = [];
+
+    // Dimension Groups
+    const cityGroup = new THREE.Group();
+    const voxelRealmGroup = new THREE.Group();
+    const cosmosGroup = new THREE.Group();
+    scene.add(cityGroup, voxelRealmGroup, cosmosGroup);
+
+    function registerPlatform(mesh, parentGroup) {
+      parentGroup.add(mesh);
+      collidablePlatforms.push(mesh);
+    }
+
+    // --- A. DIMENSION 1: DESERTED MONOCHROME CITY & ABANDONED GALLERY ---
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x222226, roughness: 0.85 });
+    const cityFloor = new THREE.Mesh(new THREE.BoxGeometry(55, 2, 55), groundMat);
+    cityFloor.position.set(0, -1, 0);
+    cityFloor.receiveShadow = true;
+    registerPlatform(cityFloor, cityGroup);
+
+    // Monochrome City Towers (Transformable via Chroma Pulse)
+    for (let i = 0; i < 26; i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const x = side * (11 + Math.random() * 14);
+      const z = -22 + (i * 1.8);
+      const h = 8 + Math.random() * 22;
+      const w = 3.5 + Math.random() * 2.5;
+      const bMat = new THREE.MeshStandardMaterial({
+        color: 0x34343a,
+        roughness: 0.7,
+        metalness: 0.2
+      });
+      const bMesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, w), bMat);
+      bMesh.position.set(x, h / 2, z);
+      bMesh.castShadow = true;
+      bMesh.receiveShadow = true;
+      bMesh.userData.targetColor = new THREE.Color().setHSL((i * 0.09) % 1, 0.75, 0.55);
+      cityGroup.add(bMesh);
+      colorableMeshes.push(bMesh);
+    }
+
+    // Golden Forest Trees inside the Plaza
+    for (let i = 0; i < 8; i++) {
+      const treeX = (i % 2 === 0 ? -6.5 : 6.5);
+      const treeZ = 14 - i * 4.5;
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.18, 0.28, 3.2, 8),
+        new THREE.MeshStandardMaterial({ color: 0x3a3222, metalness: 0.5 })
+      );
+      trunk.position.set(treeX, 1.6, treeZ);
+      const canopy = new THREE.Mesh(
+        new THREE.OctahedronGeometry(1.35, 0),
+        new THREE.MeshStandardMaterial({ color: 0x6b5b35, emissive: 0x221a00, wireframe: false })
+      );
+      canopy.position.set(treeX, 3.8, treeZ);
+      canopy.userData.targetColor = new THREE.Color(0xffd166);
+      colorableMeshes.push(canopy);
+      cityGroup.add(trunk, canopy);
+    }
+
+    // The Mysterious Girl NPC
+    const girlGroup = new THREE.Group();
+    const girlDress = new THREE.Mesh(
+      new THREE.ConeGeometry(0.55, 1.8, 16),
+      new THREE.MeshStandardMaterial({ color: 0xeeeeee, emissive: 0x222222 })
+    );
+    girlDress.position.y = 0.9;
+    const girlHead = new THREE.Mesh(
+      new THREE.SphereGeometry(0.28, 16, 16),
+      new THREE.MeshStandardMaterial({ color: 0xffffff })
+    );
+    girlHead.position.y = 2.05;
+    const girlHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(0.45, 0.03, 12, 32),
+      new THREE.MeshBasicMaterial({ color: 0xffd166 })
+    );
+    girlHalo.position.y = 2.45;
+    girlHalo.rotation.x = Math.PI / 2;
+    girlGroup.add(girlDress, girlHead, girlHalo);
+    girlGroup.position.set(-3.2, 0, 8);
+    cityGroup.add(girlGroup);
+
+    // Abandoned Gallery Structure & Transforming Painting at North Plaza
+    const galleryArch = new THREE.Mesh(
+      new THREE.BoxGeometry(9, 7.5, 1.2),
+      new THREE.MeshStandardMaterial({ color: 0x1e1e24 })
+    );
+    galleryArch.position.set(0, 3.75, -18);
+    cityGroup.add(galleryArch);
+
+    const paintingFrame = new THREE.Mesh(
+      new THREE.BoxGeometry(4.6, 4.6, 0.3),
+       goldSuitMat
+    );
+    paintingFrame.position.set(0, 3.6, -17.3);
+    cityGroup.add(paintingFrame);
+
+    const paintingMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(4.0, 4.0),
+      new THREE.MeshBasicMaterial({ map: paintingTexture })
+    );
+    paintingMesh.position.set(0, 3.6, -17.12);
+    cityGroup.add(paintingMesh);
+
+    // Portal Ring around the Painting
+    const portalTorus = new THREE.Mesh(
+      new THREE.TorusGeometry(2.6, 0.12, 16, 48),
+      new THREE.MeshBasicMaterial({ color: 0xffd166, wireframe: true })
+    );
+    portalTorus.position.set(0, 3.6, -16.9);
+    portalTorus.visible = false;
+    cityGroup.add(portalTorus);
+
+    // Faint Guide Thread & Active Glowing Golden Thread between Girl and Painting
+    const threadCurve = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(-3.2, 1.6, 8),
+      new THREE.Vector3(-1.5, 2.8, 0),
+      new THREE.Vector3(1.2, 2.2, -9),
+      new THREE.Vector3(0, 3.5, -17.0)
+    ]);
+    const threadGeo = new THREE.TubeGeometry(threadCurve, 40, 0.06, 8, false);
+    const threadMat = new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, opacity: 0.2 });
+    const goldenThreadMesh = new THREE.Mesh(threadGeo, threadMat);
+    cityGroup.add(goldenThreadMesh);
+
+    // --- B. DIMENSION 2: FLOATING GEOMETRIC VOXEL MINDSCAPE (FROM VIDEO 1) ---
+    // Stepping Islands leading to the Boss Arena at Z = -35 to Z = -95
+    const pastelPalette = [0xff77c8, 0x5ce1e6, 0x9b72ff, 0x343446, 0x242434];
+
+    function createVoxelIsland(cx, cy, cz, sizeX, sizeZ, isArena = false) {
+      const islandBase = new THREE.Mesh(
+        new THREE.BoxGeometry(sizeX, 2.2, sizeZ),
+        new THREE.MeshStandardMaterial({ color: 0x282836, roughness: 0.6 })
+      );
+      islandBase.position.set(cx, cy - 1.1, cz);
+      registerPlatform(islandBase, voxelRealmGroup);
+
+      // Decorative Pastel & Dark Voxel Sub-Cubes on surface edges
+      const tilesCount = isArena ? 45 : 16;
+      for (let i = 0; i < tilesCount; i++) {
+        const col = pastelPalette[i % pastelPalette.length];
+        const tile = new THREE.Mesh(
+          new THREE.BoxGeometry(1.4, 0.45, 1.4),
+          new THREE.MeshStandardMaterial({
+            color: col,
+            emissive: col,
+            emissiveIntensity: 0.22
+          })
+        );
+        tile.position.set(
+          cx + (Math.random() - 0.5) * (sizeX - 1.5),
+          cy + 0.05,
+          cz + (Math.random() - 0.5) * (sizeZ - 1.5)
+        );
+        voxelRealmGroup.add(tile);
+      }
+    }
+
+    // Create sequence of floating geometric islands
+    createVoxelIsland(0, 0, -34, 12, 12);
+    createVoxelIsland(0, 1.5, -52, 11, 11); // Gap between -40 and -46.5 requires Light Construct [3] or Gravity [4]
+    createVoxelIsland(0, 4.0, -70, 12, 12);
+    createVoxelIsland(0, 5.0, -94, 24, 24, true); // Boss Arena
+
+    // Background Floating Voxel Clusters & Golden Polyhedra (matching Video 1)
+    const floatingPolyhedra = [];
+    for (let i = 0; i < 42; i++) {
+      const cluster = new THREE.Group();
+      for (let c = 0; c < 5; c++) {
+        const col = pastelPalette[(i + c) % pastelPalette.length];
+        const cube = new THREE.Mesh(
+          new THREE.BoxGeometry(1.8, 1.8, 1.8),
+          new THREE.MeshStandardMaterial({ color: col, roughness: 0.4 })
+        );
+        cube.position.set(
+          (Math.random() - 0.5) * 2.4,
+          (Math.random() - 0.5) * 2.4,
+          (Math.random() - 0.5) * 2.4
+        );
+        cluster.add(cube);
+      }
+      cluster.position.set(
+        (Math.random() - 0.5) * 90,
+        4 + Math.random() * 35,
+        -25 - Math.random() * 90
+      );
+      voxelRealmGroup.add(cluster);
+      floatingPolyhedra.push({ mesh: cluster, speed: 0.3 + Math.random() * 0.5 });
+    }
+
+    // Floating Golden Octahedrons (Directly from top-left of Video 1)
+    for (let i = 0; i < 16; i++) {
+      const oct = new THREE.Mesh(
+        new THREE.OctahedronGeometry(1.35, 0),
+        goldSuitMat
+      );
+      oct.position.set(
+        (Math.random() - 0.5) * 65,
+        5 + Math.random() * 22,
+        -28 - Math.random() * 80
+      );
+      voxelRealmGroup.add(oct);
+      floatingPolyhedra.push({ mesh: oct, speed: 0.8 + Math.random() });
+    }
+
+    // 3 Collectible Memory Symbols across the Islands
+    const memoryPositions = [
+      new THREE.Vector3(4, 1.8, -34),
+      new THREE.Vector3(-3.5, 3.3, -52),
+      new THREE.Vector3(0, 5.8, -70)
+    ];
+    memoryPositions.forEach((pos, idx) => {
+      const memMesh = new THREE.Mesh(
+        new THREE.OctahedronGeometry(0.85, 0),
+        new THREE.MeshBasicMaterial({ color: 0x5ce1e6, wireframe: false })
+      );
+      memMesh.position.copy(pos);
+      memMesh.userData = { index: idx, collected: false };
+      voxelRealmGroup.add(memMesh);
+      memoryNodes.push(memMesh);
+    });
+
+    // --- C. THE SHADOW TENDRIL MONSTER BOSS (FROM VIDEO 1 & IMAGE 2) ---
+    const bossGroup = new THREE.Group();
+    const bossMat = new THREE.MeshStandardMaterial({
+      color: 0x0e0e14,
+      roughness: 0.35,
+      metalness: 0.45
+    });
+    const bossBody = new THREE.Mesh(new THREE.SphereGeometry(2.1, 20, 20), bossMat);
+    bossBody.position.y = 3.2;
+    bossBody.scale.set(1, 1.25, 0.9);
+    bossGroup.add(bossBody);
+
+    // Glowing eerie eyes/void holes on boss
+    for (let i = 0; i < 7; i++) {
+      const eye = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, 8, 8),
+        new THREE.MeshBasicMaterial({ color: 0xff3366 })
+      );
+      eye.position.set(
+        (Math.random() - 0.5) * 1.5,
+        3.0 + (Math.random() - 0.5) * 1.4,
+        1.75
+      );
+      bossGroup.add(eye);
+    }
+
+    // Writhing Boss Tentacles
+    const bossTentacles = [];
+    for (let i = 0; i < 24; i++) {
+      const tentGeo = new THREE.ConeGeometry(0.28, 3.6, 8);
+      tentGeo.translate(0, 1.8, 0);
+      const tent = new THREE.Mesh(tentGeo, bossMat);
+      tent.position.set(
+        (Math.random() - 0.5) * 2.2,
+        2.2 + Math.random() * 2.4,
+        (Math.random() - 0.5) * 1.8
+      );
+      tent.rotation.set(
+        (Math.random() - 0.5) * 2.2,
+        Math.random() * Math.PI * 2,
+        (Math.random() - 0.5) * 2.2
+      );
+      bossGroup.add(tent);
+      bossTentacles.push({
+        mesh: tent,
+        baseX: tent.rotation.x,
+        baseZ: tent.rotation.z,
+        phase: i * 0.6
+      });
+    }
+    bossGroup.position.set(0, 5.0, -96);
+    voxelRealmGroup.add(bossGroup);
+
+    // --- D. COSMIC STARDUST PARTICLES (FROM IMAGE 2) ---
+    const starGeo = new THREE.BufferGeometry();
+    const starCount = 1200;
+    const starPos = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      starPos[i] = (Math.random() - 0.5) * 220;
+      starPos[i + 1] = (Math.random() - 0.2) * 120;
+      starPos[i + 2] = (Math.random() - 0.5) * 220;
+    }
+    starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+    const starMat = new THREE.PointsMaterial({ color: 0xffd166, size: 0.45, transparent: true, opacity: 0.8 });
+    const starPoints = new THREE.Points(starGeo, starMat);
+    cosmosGroup.add(starPoints);
+
+    // Gold Particle Burst Pool for Combat & Portals
+    const burstParticles = [];
+    function spawnGoldBurst(origin, count = 25, colorHex = 0xffd166) {
+      for (let i = 0; i < count; i++) {
+        const p = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.18, 0),
+          new THREE.MeshBasicMaterial({ color: colorHex })
+        );
+        p.position.copy(origin);
+        scene.add(p);
+        burstParticles.push({
+          mesh: p,
+          vel: new THREE.Vector3(
+            (Math.random() - 0.5) * 10,
+            Math.random() * 8 + 2,
+            (Math.random() - 0.5) * 10
+          ),
+          life: 1.0
+        });
+      }
+    }
+
+    /**************************************************************
+     * 6. UI MANAGEMENT & CHAKRA DOCK
+     **************************************************************/
+    const dockEl = document.getElementById('chakra-dock');
+    const promptEl = document.getElementById('prompt-box');
+    const toastEl = document.getElementById('toast-box');
+    const objTextEl = document.getElementById('objective-text');
+    const dimLabelEl = document.getElementById('dimension-label');
+    const memCountEl = document.getElementById('memories-count');
+    const chakraCountEl = document.getElementById('chakras-count');
+    const clarityFillEl = document.getElementById('clarity-fill');
+    const clarityPctEl = document.getElementById('clarity-pct');
+    const bossHudEl = document.getElementById('boss-hud');
+    const bossBarFill = document.getElementById('boss-bar-fill');
+
+    function renderChakraDock() {
+      dockEl.innerHTML = '';
+      let unlockedTotal = 0;
+      CHAKRAS.forEach(c => {
+        if (c.unlocked) unlockedTotal++;
+        const slot = document.createElement('div');
+        slot.className = `chakra-slot ${c.unlocked ? 'unlocked' : ''} ${state.activeChakra === c.id ? 'active' : ''}`;
+        slot.innerHTML = `
+          <span class="slot-key">${c.id}</span>
+          <div class="slot-dot" style="background:${c.color}; color:${c.color}"></div>
+          <div class="slot-name">${c.name}</div>
+        `;
+        slot.onclick = () => selectChakra(c.id);
+        dockEl.appendChild(slot);
+      });
+      chakraCountEl.textContent = `Chakras: ${unlockedTotal} / 7`;
+      swordGroup.visible = (state.activeChakra === 7 && CHAKRAS[6].unlocked);
+    }
+
+    function selectChakra(id) {
+      const target = CHAKRAS.find(c => c.id === id);
+      if (!target || !target.unlocked) {
+        showToast(`Chakra Node ${id} (${target ? target.name : ''}) is still dormant.`);
+        return;
+      }
+      state.activeChakra = id;
+      audio.playTone(320 + id * 65, 'sine', 0.18, 0.08);
+      renderChakraDock();
+      showToast(`Active Chakra [${id}]: ${target.name} — ${target.desc}`);
+    }
+
+    let toastTimeout = null;
+    function showToast(msg, duration = 3200) {
+      toastEl.textContent = msg;
+      toastEl.classList.remove('hidden');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => toastEl.classList.add('hidden'), duration);
+    }
+
+    function updateHUD() {
+      memCountEl.textContent = `Memories: ${state.memoriesFound} / ${state.totalMemories}`;
+      clarityFillEl.style.width = `${state.clarity}%`;
+      clarityPctEl.textContent = `${state.clarity}%`;
+
+      // Scale player's dark tendrils down as mind clarity increases
+      const tendrilScale = Math.max(0.15, 1 - (state.clarity - 35) / 80);
+      playerTendrils.forEach(t => {
+        t.mesh.scale.setScalar(tendrilScale);
+      });
+      renderChakraDock();
+    }
+
+    function shiftDimensionVisuals(dimIndex) {
+      state.dimension = dimIndex;
+      if (dimIndex === 0) {
+        scene.background.setHex(0x0b0b10);
+        scene.fog.color.setHex(0x0b0b10);
+        dimLabelEl.textContent = "DIMENSION I: MONOCHROME SUBCONSCIOUS CITY";
+      } else if (dimIndex === 1) {
+        scene.background.setHex(0x88b4cc);
+        scene.fog.color.setHex(0x88b4cc);
+        dimLabelEl.textContent = "DIMENSION II: FLOATING GEOMETRIC MINDSCAPE";
+      } else {
+        scene.background.setHex(0x05020a);
+        scene.fog.color.setHex(0x05020a);
+        dimLabelEl.textContent = "DIMENSION III: ASTRAL SHADOW COSMOS";
+      }
+      audio.sfxPortal();
+    }
+
+    /**************************************************************
+     * 7. PLAYER MOVEMENT, CAMERA ORBIT & COLLISION SYSTEM
+     **************************************************************/
+    const keys = {};
+    const playerVel = new THREE.Vector3();
+    let isGrounded = false;
+    let camYaw = 0;
+    let camPitch = 0.35;
+    let isPointerDown = false;
+
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+      if (!state.running || state.paused) {
+        if (e.code === 'Escape' && state.paused) togglePause();
+        return;
+      }
+      if (e.code === 'Escape') togglePause();
+      if (e.code === 'KeyE') handleContextInteraction();
+      if (e.code === 'KeyQ') triggerActiveChakraPower();
+      if (e.code === 'Tab') {
+        e.preventDefault();
+        if (CHAKRAS[4].unlocked || state.portalOpened) {
+          shiftDimensionVisuals((state.dimension + 1) % 3);
+          showToast("Phased into parallel Mind Dimension.");
+        } else {
+          showToast("Awaken the Gallery Portal first to shift Dimensions!");
+        }
+      }
+      if (e.code.startsWith('Digit')) {
+        const num = parseInt(e.code.replace('Digit', ''), 10);
+        if (num >= 1 && num <= 7) selectChakra(num);
+      }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
+
+    window.addEventListener('mousedown', (e) => {
+      if (e.target === canvas) isPointerDown = true;
+    });
+    window.addEventListener('mouseup', () => { isPointerDown = false; });
+    window.addEventListener('mousemove', (e) => {
+      if (!isPointerDown || !state.running || state.paused) return;
+      camYaw -= e.movementX * state.cameraSensitivity;
+      camPitch = Math.max(0.08, Math.min(1.15, camPitch + e.movementY * state.cameraSensitivity));
+    });
+
+    /**************************************************************
+     * 8. GAMEPLAY MECHANICS: THREADS, CHAKRAS & BOSS COMBAT
+     **************************************************************/
+    function handleContextInteraction() {
+      const pPos = playerGroup.position;
+
+      // 1. Interact with Mysterious Girl
+      if (pPos.distanceTo(girlGroup.position) < 4.5) {
+        state.girlSpoken = true;
+        goldenThreadMesh.material.opacity = 0.95;
+        state.clarity = Math.min(100, state.clarity + 10);
+        audio.sfxThread();
+        spawnGoldBurst(girlGroup.position.clone().add(new THREE.Vector3(0, 1.5, 0)), 18);
+        objTextEl.textContent = "Follow the Golden Thread north to the Abandoned Gallery Painting and press [E].";
+        showToast("Mysterious Girl: 'Our memories are tangled in the canvas... Follow the golden thread.'");
+        updateHUD();
+        return;
+      }
+
+      // 2. Interact with the Gallery Painting
+      const paintingPos = new THREE.Vector3(0, 1.5, -16.5);
+      if (pPos.distanceTo(paintingPos) < 5.0) {
+        if (!state.girlSpoken) {
+          showToast("A dormant monochrome painting. Speak to the Mysterious Girl in the plaza first.");
+          return;
+        }
+        if (!state.portalOpened) {
+          state.threadConnected = true;
+          state.portalOpened = true;
+          portalTorus.visible = true;
+          CHAKRAS[2].unlocked = true; // Light Construct
+          CHAKRAS[3].unlocked = true; // Gravity Inversion
+          CHAKRAS[4].unlocked = true; // Dimension Shift
+          state.activeChakra = 3;
+          state.clarity = Math.min(100, state.clarity + 15);
+          audio.sfxPortal();
+          spawnGoldBurst(new THREE.Vector3(0, 3.5, -16.8), 35);
+          objTextEl.textContent = "Step into the Golden Painting Portal (or press [E] again) to enter the Geometric Dimension.";
+          showToast("PORTAL AWAKENED! Chakras 3, 4 & 5 Unlocked: Light Construct & Gravity Control!");
+          updateHUD();
+          return;
+        } else {
+          // Teleport through painting into Floating Geometric Dimension
+          playerGroup.position.set(0, 2, -32);
+          playerVel.set(0, 0, 0);
+          shiftDimensionVisuals(1);
+          objTextEl.textContent = "Collect 3 Memory Crystals across the floating islands. Use [Q] with Chakra 3 to build Light Bridges!";
+          return;
+        }
+      }
+    }
+
+    function triggerActiveChakraPower() {
+      const pPos = playerGroup.position.clone();
+      const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), playerGroup.rotation.y);
+
+      switch (state.activeChakra) {
+        case 1: // Chroma Pulse: Transform monochrome objects into vibrant color
+          audio.sfxColorWave();
+          spawnGoldBurst(pPos.clone().add(new THREE.Vector3(0, 1.5, 0)), 25, 0xff3366);
+          let coloredAny = false;
+          colorableMeshes.forEach(m => {
+            if (m.position.distanceTo(pPos) < 22) {
+              m.material.color.copy(m.userData.targetColor);
+              m.material.emissive = m.userData.targetColor.clone().multiplyScalar(0.25);
+              coloredAny = true;
+            }
+          });
+          showToast(coloredAny ? "Chroma Wave infused nearby monochrome architecture with luminous color!" : "Chroma Pulse rippled through consciousness.");
+          break;
+
+        case 2: // Golden Thread Pulse
+          audio.sfxThread();
+          goldenThreadMesh.material.opacity = 1.0;
+          spawnGoldBurst(pPos.clone().add(new THREE.Vector3(0, 1.5, 0)), 16, 0xffd166);
+          showToast("Golden Resonance Thread pulsed toward the next memory anchor.");
+          break;
+
+        case 3: // Light Construct: Spawn solid golden bridge platform ahead of player
+          audio.sfxThread();
+          const spawnPos = pPos.clone().add(forward.multiplyScalar(4.8));
+          spawnPos.y = pPos.y - 0.4;
+          const bridge = new THREE.Mesh(
+            new THREE.BoxGeometry(4.5, 0.5, 4.5),
+            new THREE.MeshBasicMaterial({ color: 0xffd166, transparent: true, opacity: 0.85 })
+          );
+          bridge.position.copy(spawnPos);
+          scene.add(bridge);
+          collidablePlatforms.push(bridge);
+          lightConstructs.push({ mesh: bridge, createdAt: performance.now() });
+          spawnGoldBurst(spawnPos, 15, 0xffd166);
+          showToast("Constructed solid Bridge of Golden Light ahead!");
+          break;
+
+        case 4: // Gravity Inversion Toggle
+          state.lowGravity = !state.lowGravity;
+          audio.sfxPortal();
+          showToast(state.lowGravity ? "Astral Gravity Activated — High Jump & Glide Enabled!" : "Standard Gravity Restored.");
+          break;
+
+        case 5: // Dimension Shift
+          shiftDimensionVisuals((state.dimension + 1) % 3);
+          break;
+
+        case 6: // Third Eye Resonance
+          audio.sfxColorWave();
+          memoryNodes.forEach(n => {
+            if (!n.userData.collected) n.scale.setScalar(1.8);
+          });
+          showToast("Third Eye Resonance amplified all uncollected Memory Crystals!");
+          break;
+
+        case 7: // Solar Lightblade Slash against the Shadow Entity
+          state.swordSwingTimer = 0.35;
+          audio.sfxSwordSlash();
+          const slashOrigin = pPos.clone().add(forward.multiplyScalar(2.4)).add(new THREE.Vector3(0, 1.5, 0));
+          spawnGoldBurst(slashOrigin, 22, 0xffe680);
+
+          if (!state.bossDefeated && pPos.distanceTo(bossGroup.position) < 9.5) {
+            state.bossHealth = Math.max(0, state.bossHealth - 25);
+            bossBarFill.style.width = `${state.bossHealth}%`;
+            audio.sfxBossHit();
+            spawnGoldBurst(bossGroup.position.clone().add(new THREE.Vector3(0, 3, 0)), 40, 0xffaa00);
+
+            if (state.bossHealth <= 0) {
+              state.bossDefeated = true;
+              bossGroup.visible = false;
+              bossHudEl.classList.add('hidden');
+              state.clarity = 100;
+              updateHUD();
+              shiftDimensionVisuals(2);
+              objTextEl.textContent = "CONSCIOUSNESS INTEGRATED! The Shadow Entity has dissolved into Golden Light.";
+              showToast("VICTORY! You purged the Shadow Trauma and unified the Nested Mind!", 6000);
+            } else {
+              showToast(`Solar Lightblade struck the Shadow Entity! (${state.bossHealth}% Remaining)`);
+            }
+          }
+          break;
+      }
+    }
+
+    /**************************************************************
+     * 9. SAVE / LOAD SYSTEM & MENU CONTROLLERS
+     **************************************************************/
+    function saveGame() {
+      const saveData = {
+        pos: playerGroup.position.toArray(),
+        dimension: state.dimension,
+        activeChakra: state.activeChakra,
+        girlSpoken: state.girlSpoken,
+        portalOpened: state.portalOpened,
+        memoriesFound: state.memoriesFound,
+        clarity: state.clarity,
+        bossHealth: state.bossHealth,
+        bossDefeated: state.bossDefeated,
+        unlockedChakras: CHAKRAS.map(c => c.unlocked)
+      };
+      localStorage.setItem('NESTED_MIND_SAVE_V2', JSON.stringify(saveData));
+      showToast("Mindstate saved to browser storage.");
+    }
+
+    function loadGame() {
+      const raw = localStorage.getItem('NESTED_MIND_SAVE_V2');
+      if (!raw) {
+        showToast("No saved synapse found. Starting fresh journey!");
+        return false;
+      }
+      try {
+        const data = JSON.parse(raw);
+        playerGroup.position.fromArray(data.pos);
+        state.dimension = data.dimension || 0;
+        state.activeChakra = data.activeChakra || 2;
+        state.girlSpoken = !!data.girlSpoken;
+        state.portalOpened = !!data.portalOpened;
+        state.memoriesFound = data.memoriesFound || 0;
+        state.clarity = data.clarity || 35;
+        state.bossHealth = data.bossHealth ?? 100;
+        state.bossDefeated = !!data.bossDefeated;
+        if (Array.isArray(data.unlockedChakras)) {
+          data.unlockedChakras.forEach((u, idx) => { if (CHAKRAS[idx]) CHAKRAS[idx].unlocked = u; });
+        }
+        portalTorus.visible = state.portalOpened;
+        bossGroup.visible = !state.bossDefeated;
+        shiftDimensionVisuals(state.dimension);
+        updateHUD();
+        showToast("Saved Mindstate restored!");
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function startGame(isContinue = false) {
+      document.getElementById('main-menu').classList.add('hidden');
+      document.getElementById('pause-menu').classList.add('hidden');
+      document.getElementById('hud').classList.remove('hidden');
+      state.running = true;
+      state.paused = false;
+      audio.init();
+      if (isContinue) loadGame();
+      else updateHUD();
+    }
+
+    function togglePause() {
+      state.paused = !state.paused;
+      document.getElementById('pause-menu').classList.toggle('hidden', !state.paused);
+    }
+
+    document.getElementById('btn-new-game').onclick = () => startGame(false);
+    document.getElementById('btn-continue').onclick = () => startGame(true);
+    document.getElementById('btn-settings').onclick = () => {
+      document.getElementById('settings-menu').classList.remove('hidden');
+    };
+    document.getElementById('btn-close-settings').onclick = () => {
+      audio.enabled = document.getElementById('chk-sound').checked;
+      state.cameraSensitivity = document.getElementById('rng-sens').value * 0.001;
+      document.getElementById('settings-menu').classList.add('hidden');
+    };
+    document.getElementById('btn-resume').onclick = () => togglePause();
+    document.getElementById('btn-save').onclick = () => { saveGame(); togglePause(); };
+    document.getElementById('btn-load').onclick = () => { loadGame(); togglePause(); };
+    document.getElementById('btn-quit').onclick = () => {
+      state.paused = false;
+      state.running = false;
+      document.getElementById('pause-menu').classList.add('hidden');
+      document.getElementById('hud').classList.add('hidden');
+      document.getElementById('main-menu').classList.remove('hidden');
+    };
+
+    /**************************************************************
+     * 10. MAIN REAL-TIME ANIMATION & PHYSICS LOOP
+     **************************************************************/
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.getElapsedTime();
+
+      // Update dynamic gallery painting shader canvas
+      drawPaintingTexture(state.portalOpened, elapsed);
+      if (portalTorus.visible) {
+        portalTorus.rotation.z = elapsed * 1.5;
+        portalTorus.scale.setScalar(1 + Math.sin(elapsed * 3) * 0.06);
+      }
+
+      // Animate player dark subconscious tendrils
+      playerTendrils.forEach(t => {
+        t.mesh.rotation.x = t.baseRotX + Math.sin(elapsed * t.speed + t.phase) * 0.28;
+        t.mesh.rotation.z = t.baseRotZ + Math.cos(elapsed * t.speed + t.phase) * 0.28;
+      });
+
+      // Animate floating polyhedra & memory nodes
+      floatingPolyhedra.forEach(fp => {
+        fp.mesh.rotation.y += dt * 0.35 * fp.speed;
+        fp.mesh.rotation.x += dt * 0.2 * fp.speed;
+      });
+
+      // Animate Boss Tentacles
+      if (!state.bossDefeated) {
+        bossTentacles.forEach(bt => {
+          bt.mesh.rotation.x = bt.baseX + Math.sin(elapsed * 3 + bt.phase) * 0.45;
+          bt.mesh.rotation.z = bt.baseZ + Math.cos(elapsed * 2.5 + bt.phase) * 0.45;
+        });
+      }
+
+      // Update burst particles
+      for (let i = burstParticles.length - 1; i >= 0; i--) {
+        const bp = burstParticles[i];
+        bp.mesh.position.addScaledVector(bp.vel, dt);
+        bp.life -= dt * 1.4;
+        bp.mesh.scale.setScalar(Math.max(0.01, bp.life));
+        if (bp.life <= 0) {
+          scene.remove(bp.mesh);
+          burstParticles.splice(i, 1);
+        }
+      }
+
+      if (state.running && !state.paused) {
+        // Movement Input Vector relative to Camera Yaw
+        const moveX = (keys['KeyD'] || keys['ArrowRight'] ? 1 : 0) - (keys['KeyA'] || keys['ArrowLeft'] ? 1 : 0);
+        const moveZ = (keys['KeyS'] || keys['ArrowDown'] ? 1 : 0) - (keys['KeyW'] || keys['ArrowUp'] ? 1 : 0);
+
+        const moveDir = new THREE.Vector3(moveX, 0, moveZ);
+        if (moveDir.lengthSq() > 0) {
+          moveDir.normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), camYaw);
+          const speed = 10.5;
+          playerGroup.position.x += moveDir.x * speed * dt;
+          playerGroup.position.z += moveDir.z * speed * dt;
+
+          const targetAngle = Math.atan2(-moveDir.x, -moveDir.z);
+          playerGroup.rotation.y = targetAngle;
+
+          // Walking limb swing
+          leftLeg.rotation.x = Math.sin(elapsed * 10) * 0.55;
+          rightLeg.rotation.x = -Math.sin(elapsed * 10) * 0.55;
+          leftArm.rotation.x = -Math.sin(elapsed * 10) * 0.45;
+          if (state.swordSwingTimer <= 0) {
+            rightArm.rotation.x = Math.sin(elapsed * 10) * 0.45;
+          }
+        } else {
+          leftLeg.rotation.x *= 0.85;
+          rightLeg.rotation.x *= 0.85;
+        }
+
+        // Sword Slash Animation
+        if (state.swordSwingTimer > 0) {
+          state.swordSwingTimer -= dt;
+          rightArm.rotation.x = -1.8 + Math.sin((0.35 - state.swordSwingTimer) * 18) * 1.5;
+        }
+
+        // Jump & Gravity Physics
+        if ((keys['Space']) && isGrounded) {
+          playerVel.y = state.lowGravity ? 15.5 : 11.2;
+          isGrounded = false;
+          audio.playTone(260, 'sine', 0.18, 0.06, 480);
+        }
+
+        const gravity = state.lowGravity ? -11.5 : -25.0;
+        playerVel.y += gravity * dt;
+        playerGroup.position.y += playerVel.y * dt;
+
+        // Platform Box Collision Detection
+        isGrounded = false;
+        const pPos = playerGroup.position;
+        for (const plat of collidablePlatforms) {
+          const box = new THREE.Box3().setFromObject(plat);
+          if (
+            pPos.x >= box.min.x - 0.45 && pPos.x <= box.max.x + 0.45 &&
+            pPos.z >= box.min.z - 0.45 && pPos.z <= box.max.z + 0.45
+          ) {
+            if (pPos.y <= box.max.y + 0.15 && pPos.y >= box.max.y - 1.2 && playerVel.y <= 0) {
+              playerGroup.position.y = box.max.y;
+              playerVel.y = 0;
+              isGrounded = true;
+              break;
+            }
+          }
+        }
+
+        // Respawn safety net if falling into the subconscious void
+        if (playerGroup.position.y < -22) {
+          playerGroup.position.set(0, 3, state.dimension === 0 ? 12 : -34);
+          playerVel.set(0, 0, 0);
+          showToast("Resurfaced from the Subconscious Void.");
+        }
+
+        // Automatic Portal Walk-Through Check
+        if (state.portalOpened && pPos.distanceTo(new THREE.Vector3(0, 1.5, -16.8)) < 2.2) {
+          playerGroup.position.set(0, 2.5, -33);
+          shiftDimensionVisuals(1);
+          objTextEl.textContent = "Collect the 3 cyan Memory Crystals across the geometric islands to awaken the Solar Lightblade!";
+        }
+
+        // Collect Memory Crystals Check
+        memoryNodes.forEach(node => {
+          node.rotation.y += dt * 1.8;
+          if (!node.userData.collected && pPos.distanceTo(node.position) < 2.2) {
+            node.userData.collected = true;
+            node.visible = false;
+            state.memoriesFound++;
+            state.clarity = Math.min(100, state.clarity + 15);
+            audio.sfxThread();
+            spawnGoldBurst(node.position, 28, 0x5ce1e6);
+
+            if (state.memoriesFound >= 2 && !CHAKRAS[5].unlocked) {
+              CHAKRAS[5].unlocked = true; // Third Eye
+            }
+            if (state.memoriesFound >= state.totalMemories) {
+              CHAKRAS[6].unlocked = true; // Chakra 7: Solar Lightblade
+              selectChakra(7);
+              objTextEl.textContent = "Solar Lightblade Awakened! Approach the Shadow Tendril Entity on the northern arena and press [Q] to strike!";
+              showToast("ALL MEMORIES CONNECTED! Chakra 7 [Solar Lightblade] Awakened!");
+            } else {
+              showToast(`Memory Synapse Restored (${state.memoriesFound}/${state.totalMemories})`);
+            }
+            updateHUD();
+          }
+        });
+
+        // Show/Hide Boss Health Bar when near Arena
+        const distToBoss = pPos.distanceTo(bossGroup.position);
+        if (!state.bossDefeated && distToBoss < 28) {
+          bossHudEl.classList.remove('hidden');
+        } else {
+          bossHudEl.classList.add('hidden');
+        }
+
+        // Context Prompt Check
+        const nearGirl = pPos.distanceTo(girlGroup.position) < 4.5;
+        const nearPainting = pPos.distanceTo(new THREE.Vector3(0, 1.5, -16.5)) < 5.0;
+        if (nearGirl) {
+          promptEl.textContent = "Press [E] to Connect with the Mysterious Girl";
+          promptEl.classList.remove('hidden');
+        } else if (nearPainting) {
+          promptEl.textContent = state.portalOpened
+            ? "Press [E] to Enter the Geometric Dimension Portal"
+            : "Press [E] to Weave Golden Thread into the Gallery Painting";
+          promptEl.classList.remove('hidden');
+        } else {
+          promptEl.classList.add('hidden');
+        }
+
+        // Third-Person Orbit Camera Follow
+        const camDist = 9.5;
+        const camX = pPos.x + Math.sin(camYaw) * Math.cos(camPitch) * camDist;
+        const camY = pPos.y + 2.2 + Math.sin(camPitch) * camDist;
+        const camZ = pPos.z + Math.cos(camYaw) * Math.cos(camPitch) * camDist;
+        camera.position.lerp(new THREE.Vector3(camX, camY, camZ), 0.18);
+        camera.lookAt(pPos.x, pPos.y + 2.1, pPos.z);
+
+        goldPointLight.position.set(pPos.x, pPos.y + 3.5, pPos.z);
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    renderChakraDock();
+    animate();
+  </script>
+</body>
+</html>
